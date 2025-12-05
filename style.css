@@ -22,7 +22,7 @@ body {
     z-index: -1;
     
     /* REMPLACE PAR TON IMAGE */
-    background-image: url('linux_vs_windaube.png'); 
+    background-image: url('img/linux_vs_windaube.png'); 
     
     background-size: cover;
     background-position: center;
