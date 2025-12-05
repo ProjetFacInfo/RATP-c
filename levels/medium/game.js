@@ -410,19 +410,11 @@ const spawnX=2, spawnY=22;
             gameState: window.GAME_STATE,
             playerPos: this.playerIso
         };
+        localStorage.removeItem('nird_rpg_save'); // Suppression de la sauvegarde
         localStorage.setItem('nird_rpg_save', JSON.stringify(data));
         console.log("Progression sauvegardée dans le LocalStorage.");
     }
-
-    saveProgress(name) {
-        const data = {
-            gameState: window.GAME_STATE,
-            playerPos: this.playerIso
-        };
-        localStorage.setItem(name, JSON.stringify(data));
-        console.log("Progression sauvegardée dans le LocalStorage.");
-    }
-
+    
     updateInventoryUI() {
         const slot1 = document.getElementById('slot-1');
         const slot2 = document.getElementById('slot-2');
