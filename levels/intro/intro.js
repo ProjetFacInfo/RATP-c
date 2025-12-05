@@ -14,14 +14,26 @@ const T_PORTAL_ANCIENT = 7; // Portail vers Tycoon
 const T_PORTAL_JS = 8;      // Portail vers Visualisation Audio
 const T_SPAWN = 9;       
 
-// --- ÉTAT GLOBAL ---
-window.GAME_STATE = window.GAME_STATE || {
-    mapMatrix: null,
-    items: {
-        csCut: false    
-    },
-    windosAlive: true   
-};
+
+const SAVED_DATA = localStorage.getItem('nird_rpg_save');
+let startPlayerPos = null;
+
+if (SAVED_DATA) {
+    console.log("Sauvegarde chargée !");
+    const parsed = JSON.parse(SAVED_DATA);
+    window.GAME_STATE = parsed.gameState;
+    startPlayerPos = parsed.playerPos;
+} else {
+    window.GAME_STATE = {
+        mapMatrix: null,
+        items: {
+            key: false,     
+            patch: false,   
+            csCut: false    
+        },
+        windosAlive: true   
+    };
+}
 
 // Fonction utilitaire : Grille -> Pixels
 function gridToScreen(x, y) {
@@ -112,7 +124,16 @@ class VillageScene extends Phaser.Scene {
 
         this.renderMap();
 
-        if (!this.playerGridPos) this.playerGridPos = { x: 2, y: 22 };
+        // Spawn Logic
+        if (startPlayerPos) {
+            this.playerIso = startPlayerPos;
+            startPlayerPos = null;
+        }
+        else if (!this.playerGridPos) {
+            this.playerGridPos = { x: 2, y: 22 }; // Spawn normal
+        }
+
+
         const pPos = gridToScreen(this.playerGridPos.x, this.playerGridPos.y);
         
         this.player = this.add.image(pPos.x, pPos.y, 'tux');
@@ -126,6 +147,16 @@ class VillageScene extends Phaser.Scene {
         if(!window.GAME_STATE.items.csCut) {
             this.showUI("Utilisez les flèches pour explorer.");
         }
+    }
+
+    saveProgress() {
+        const data = {
+            gameState: window.GAME_STATE,
+            playerPos: this.playerIso
+        };
+        localStorage.removeItem('nird_intro_rpg_save');
+        localStorage.setItem('nird_intro_rpg_save', JSON.stringify(data));
+        console.log("Progression sauvegardée.");
     }
 
     generateNewMap() {
@@ -185,12 +216,33 @@ class VillageScene extends Phaser.Scene {
         for(let y=0; y<MAP_SIZE; y++) {
             for(let x=0; x<MAP_SIZE; x++) {
                 if(matrix[y][x] !== T_GRASS) continue;
+                
+                // On saute l'intérieur du château
                 if (x >= castleRect.x && x < castleRect.x + castleRect.w && y >= castleRect.y && y < castleRect.y + castleRect.h) continue;
+                
+                // On saute les points protégés (spawn, portails...)
                 if (protectedPoints.some(p => p.x === x && p.y === y)) continue;
+
+                // =========================================================
+                // MODIFICATION ICI : Dégager un chemin secret
+                // =========================================================
+                
+                // OPTION 1 : Dégager le coté OUEST (Gauche) le long du mur
+                // Cela garde la colonne 0 vide jusqu'en bas du château
+                if (x === 0 && y <= castleRect.y + castleRect.h) continue;
+
+                /* // OPTION 2 (Alternative) : Dégager le coté NORD (Haut)
+                // Si tu préfères passer par le haut, décommente cette ligne et commente l'option 1 :
+                if (y === 0 && x <= castleRect.x + castleRect.w) continue;
+                */
+               
+                // =========================================================
+
                 if(Phaser.Math.Between(0,100) < 20) matrix[y][x] = T_TREE;
             }
         }
-        
+
+
         // Accès
         const ensureAccessibility = (targetX, targetY) => {
             let cx = 12; let cy = 12; 

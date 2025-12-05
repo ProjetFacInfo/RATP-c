@@ -1,6 +1,8 @@
 // Delete all saves when restarting the game from the main menu
 localStorage.removeItem('nird_rpg_save'); // Suppression de la sauvegarde
 localStorage.removeItem('has_won_laser_game'); // Suppression de l'info Laser Game
+localStorage.removeItem('nird_intro_rpg_save');
+
 
 document.addEventListener('DOMContentLoaded', () => {
     
