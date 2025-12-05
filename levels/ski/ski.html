@@ -2,24 +2,39 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Tux Toboggan - Version Finale</title>
-    <link rel="stylesheet" href="style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tux Toboggan - Challenge NIRD</title>
+    <link rel="stylesheet" href="ski.css">
 </head>
 <body>
 
-<div id="ui-container">
-    <div id="start-screen">
-        <h1>Tux Toboggan</h1>
-        <p>Prêt à plonger ?<br>Maintenez <b>ESPACE</b> pour charger, relâchez pour glisser.</p>
-    </div>
-    <div id="power-bar-container"><div id="power-bar"></div></div>
-    <div id="message">
-        <div id="result-text"></div>
-        <button onclick="resetGame()">Rejouer</button>
-    </div>
-</div>
+    <div id="ui-container">
+        <div id="start-screen">
+            <h1>Tux Toboggan</h1>
+            <p>Maintenez <b>ESPACE</b> ou <b>CLIQUEZ</b> pour charger la puissance.<br>Relâchez pour glisser !</p>
+            <p style="font-size: 0.8em; opacity: 0.8;">Objectif : Dépasser la ligne rouge.</p>
+        </div>
 
-<script type="module" src="https://unpkg.com/three@0.154.0/build/three.module.js"></script>
-<script type="module" src="main.js"></script>
+        <div id="power-bar-container">
+            <div id="power-bar"></div>
+        </div>
+
+        <div id="message">
+            <div id="result-text"></div>
+            <div class="btn-group">
+                <button onclick="resetGame()">Rejouer</button>
+                <button id="next-btn" onclick="window.location.href='../medium/medium.html'">Continuer ➡</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.154.0/build/three.module.js"
+            }
+        }
+    </script>
+    <script type="module" src="ski.js"></script>
 </body>
 </html>

@@ -495,7 +495,8 @@ class VillageScene extends Phaser.Scene {
             // --- NOUVEAU PORTAIL VISUALISATION ---
             if (obs.type === 'portal_js') {
                 this.showUI("Lancement de la Visualisation Audio...");
-                localStorage.setItem("previous_map", "end");
+                localStorage.setItem("previous_map", "medium");
+                this.saveProgress();
 
                 this.time.delayedCall(500, () => window.location.href = "../visualisation-audio/visual-audio.html");
                 return false;
