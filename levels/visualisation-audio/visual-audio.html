@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NIRD VISUALIZER - PENGUIN EDITION</title>
+    <title>NIRD VISUALIZER</title>
     
     <link rel="stylesheet" href="visual-audio.css">
     
@@ -21,9 +21,24 @@
     <div id="overlay">
         <h1>KERNEL ANALYZER</h1>
         <div style="color:#888; margin-bottom: 20px;">Visualization du Spectre Audio</div>
-        <label for="audio-input" class="btn">CHARGER FICHIER AUDIO</label>
+        
+        <label for="audio-input" class="btn">📂 CHARGER UN FICHIER (PC)</label>
         <input type="file" id="audio-input" accept="audio/*">
-        <p style="color:#ffff00; margin-top: 20px;">Attention : Surchauffe du noyau (Rouge) = Pingouins !</p>
+
+        <div class="separator">- OU CHOISIR UNE PISTE DU SITE -</div>
+
+        <div class="preset-container">
+            <select id="preset-select">
+                <option value="audio/MBB - Take It Easy (MP3).mp3">🎵 MBB - Take It Easy</option>
+                <option value="audio/Roa - All Night.mp3">🎵 Roa - All Night</option>
+                <option value="audio/tubebackr - Cakewalk.mp4">🎵 tubebackr - Cakewalk</option>
+            </select>
+            <button id="play-preset-btn" class="btn btn-small">▶ LANCER</button>
+        </div>
+
+        <p style="color:#ffff00; margin-top: 30px; font-size: 0.8em;">Attention : Surchauffe du noyau (Rouge) = Pingouins !</p>
+        
+        <button id="exit-btn" class="btn-corner">RETOUR BASE</button>
     </div>
 
     <div id="hud">
@@ -34,9 +49,7 @@
         PENGUINS EJECTED: <span id="penguin-count">0</span>
     </div>
 
-    <button id="exit-btn" class="btn-corner">RETOUR BASE</button>
-
-    <audio id="audio" style="display:none"></audio>
+    <audio id="audio" crossorigin="anonymous" style="display:none"></audio>
 
     <script type="module" src="visual-audio.js"></script>
 </body>
