@@ -30,18 +30,6 @@ window.GAME_STATE = {
     windosAlive: true   // Ennemi
 };
 
-// 1. On vérifie si le joueur revient victorieux du laser game
-if (localStorage.getItem('has_won_laser_game') === 'true') {
-
-    
-    // 2. On donne l'item
-    window.GAME_STATE.items.patch = true;
-    window.GAME_STATE.items.key = true;
-    // 3. IMPORTANT : On supprime immédiatement l'info de la mémoire
-    // Pour que si on reload la page (F5), on recommence sans l'item
-    localStorage.removeItem('has_won_laser_game');
-}
-
 if (SAVED_DATA) {
     console.log("Sauvegarde chargée !");
     const parsed = JSON.parse(SAVED_DATA);
@@ -58,6 +46,18 @@ if (SAVED_DATA) {
         },
         windosAlive: true   // Ennemi
     };
+}
+
+// 1. On vérifie si le joueur revient victorieux du laser game
+if (localStorage.getItem('has_won_laser_game') === 'true') {
+
+    
+    // 2. On donne l'item
+    window.GAME_STATE.items.patch = true;
+    window.GAME_STATE.items.key = true;
+    // 3. IMPORTANT : On supprime immédiatement l'info de la mémoire
+    // Pour que si on reload la page (F5), on recommence sans l'item
+    //localStorage.removeItem('has_won_laser_game');
 }
 
 function isoToScreen(x, y) {
