@@ -501,6 +501,8 @@ const spawnX=2, spawnY=22;
             }
             if (obs.type === 'portal_final') {                    
                 this.showUI("Lancement de la carte finale...");
+                localStorage.removeItem('nird_rpg_save'); // Suppression de la sauvegarde
+                localStorage.removeItem('has_won_laser_game'); // Suppression de l'info Laser Game
                 this.time.delayedCall(500, () => window.location.href = "../end/end.html");
                 return false;
             }
