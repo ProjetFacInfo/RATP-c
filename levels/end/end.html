@@ -482,13 +482,7 @@
                         alert("Vous avez obtenu les CISEAUX MAGIQUES !");
                     }
                     else if (obj.type === 'portal_final') {
-                        if(gameState.hasKey) {
-                            alert("VICTOIRE ! Vous avez libéré le royaume.");
-                            location.reload();
-                        } else {
-                            playerGroup.position.z += 2;
-                            alert("Portail verrouillé ! Il faut la CLÉ.");
-                        }
+                        window.location.href = "../boss/boss.html";
                     }
                 }
             }
