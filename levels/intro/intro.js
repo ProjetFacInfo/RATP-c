@@ -348,11 +348,13 @@ class VillageScene extends Phaser.Scene {
                 }
             }
             if (obs.type === 'portal_hidden') {
-                this.showUI("Vous trouvez la CS-Coupe !");
+                this.showUI("Vous trouvez la CS-Coupe ! Sauvegarde effectuée.");
                 window.GAME_STATE.items.csCut = true;
                 this.updateInventoryUI();
-                obs.sprite.destroy(); 
+                this.saveProgress();
+                obs.sprite.destroy();
                 this.obstacles.splice(this.obstacles.indexOf(obs), 1);
+                setTimeout(() => window.location.href = "../snake/snake.html", 1000);
                 return false;
             }
             if (obs.type === 'enemy') {
