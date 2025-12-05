@@ -4,16 +4,16 @@ const TILE_HEIGHT = 32;
 const MAP_SIZE = 25;
 
 // --- CODES DE LA MATRICE (Légende) ---
-const T_GRASS = 0;       
-const T_PATH = 1;        
-const T_TREE = 2;        
-const T_KEY = 3;         
-const T_PORTAL_PUZZLE = 4; 
-const T_PORTAL_FINAL = 5;  
-const T_PORTAL_HIDDEN = 6; 
-const T_PORTAL_ANCIENT = 7; 
+const T_GRASS = 0;
+const T_PATH = 1;
+const T_TREE = 2;
+const T_KEY = 3;
+const T_PORTAL_PUZZLE = 4;
+const T_PORTAL_FINAL = 5;
+const T_PORTAL_HIDDEN = 6;
+const T_PORTAL_ANCIENT = 7;
 const T_PORTAL_JS = 8;      // Portail JS (Audio)
-const T_SPAWN = 9;       
+const T_SPAWN = 9;
 
 // --- ÉTAT GLOBAL (Persistance & Chargement) ---
 const SAVED_DATA = localStorage.getItem('nird_rpg_save');
@@ -28,11 +28,11 @@ if (SAVED_DATA) {
     window.GAME_STATE = {
         mapMatrix: null,
         items: {
-            key: false,     
-            patch: false,   
-            csCut: false    
+            key: false,
+            patch: false,
+            csCut: false
         },
-        windosAlive: true   
+        windosAlive: true
     };
 }
 
@@ -200,7 +200,7 @@ class VillageScene extends Phaser.Scene {
 
         // 3. Objets
         setM(portalFinalX, portalFinalY, T_PORTAL_FINAL);
-        setM(portalPuzzleX, portalPuzzleY, T_PORTAL_PUZZLE); 
+        setM(portalPuzzleX, portalPuzzleY, T_PORTAL_PUZZLE);
         setM(portalHiddenX, portalHiddenY, T_PORTAL_HIDDEN);
         setM(portalAncientX, portalAncientY, T_PORTAL_ANCIENT);
         setM(portalJsX, portalJsY, T_PORTAL_JS);
@@ -225,7 +225,7 @@ class VillageScene extends Phaser.Scene {
                 if(matrix[y][x] !== T_GRASS) continue;
                 if (x >= castleRect.x && x < castleRect.x + castleRect.w &&
                     y >= castleRect.y && y < castleRect.y + castleRect.h) continue;
-                
+
                 const isProtected = protectedPoints.some(p => p.x === x && p.y === y);
                 if (isProtected) continue;
 
@@ -243,8 +243,8 @@ class VillageScene extends Phaser.Scene {
             }
         };
 
-        ensureAccessibility(keyX, keyY);             
-        ensureAccessibility(portalPuzzleX, portalPuzzleY); 
+        ensureAccessibility(keyX, keyY);
+        ensureAccessibility(portalPuzzleX, portalPuzzleY);
         ensureAccessibility(portalAncientX, portalAncientY);
         ensureAccessibility(portalJsX, portalJsY);
 
@@ -294,7 +294,7 @@ class VillageScene extends Phaser.Scene {
                 // --- OBJETS & LABELS ---
                 if (val === T_TREE) this.addObj(x, y, 'tree', true, 'tree', false);
                 else if (val === T_KEY && !window.GAME_STATE.items.key) this.addObj(x, y, 'item_key', false, 'item_key', false);
-                
+
                 else if (val === T_PORTAL_PUZZLE) {
                     this.addObj(x, y, 'portal_tex', true, 'portal_puzzle', false);
                     this.addLabel(x, y, "PUZZLE");
@@ -305,7 +305,7 @@ class VillageScene extends Phaser.Scene {
                 }
                 else if (val === T_PORTAL_ANCIENT) {
                     let p = this.addObj(x, y, 'portal_ancient_tex', true, 'portal_ancient', false);
-                    p.sprite.setTint(0x888888); 
+                    p.sprite.setTint(0x888888);
                     this.addLabel(x, y, "TYCOON");
                 }
                 else if (val === T_PORTAL_JS) {
@@ -415,7 +415,7 @@ class VillageScene extends Phaser.Scene {
         localStorage.setItem('nird_rpg_save', JSON.stringify(data));
         console.log("Progression sauvegardée.");
     }
-    
+
     updateInventoryUI() {
         const slot1 = document.getElementById('slot-1');
         const slot2 = document.getElementById('slot-2');
@@ -451,13 +451,8 @@ class VillageScene extends Phaser.Scene {
             }
             // PORTAIL SECRET
             if (obs.type === 'portal_hidden') {
-                this.showUI("Vous trouvez la CS-Coupe ! Sauvegarde effectuée.");
-                window.GAME_STATE.items.csCut = true;
-                this.updateInventoryUI();
                 this.saveProgress();
-                obs.sprite.destroy();
-                this.obstacles.splice(this.obstacles.indexOf(obs), 1);
-                setTimeout(() => window.location.href = "../snake/snake.html", 1000);
+                setTimeout(() => window.location.href = "../ski/ski.html", 1000);
                 return false;
             }
             // ENNEMI
@@ -484,9 +479,9 @@ class VillageScene extends Phaser.Scene {
                 }
                 return false;
             }
-            if (obs.type === 'portal_final') {                    
+            if (obs.type === 'portal_final') {
                 this.showUI("Lancement de la carte finale...");
-                localStorage.removeItem('nird_rpg_save'); 
+                localStorage.removeItem('nird_rpg_save');
                 localStorage.removeItem('has_won_laser_game');
                 this.time.delayedCall(500, () => window.location.href = "../end/end.html");
                 return false;
@@ -496,12 +491,12 @@ class VillageScene extends Phaser.Scene {
                 startTycoonMinigame();
                 return false;
             }
-            
+
             // --- NOUVEAU PORTAIL VISUALISATION ---
             if (obs.type === 'portal_js') {
                 this.showUI("Lancement de la Visualisation Audio...");
                 localStorage.setItem("previous_map", "end");
-                
+
                 this.time.delayedCall(500, () => window.location.href = "../visualisation-audio/visual-audio.html");
                 return false;
             }
@@ -538,7 +533,7 @@ class PuzzleScene extends Phaser.Scene {
         this.tileSize = 50;
         this.startX = (this.scale.width - (this.gridSize * this.tileSize)) / 2;
         this.startY = 150;
-        
+
         this.tiles = [];
         this.playerPos = { x: 0, y: 0 };
         this.activeTiles = 0;
@@ -618,13 +613,13 @@ function startTycoonMinigame() {
     overlay.style.height = '100%';
     overlay.style.zIndex = '9999';
     overlay.style.backgroundColor = '#000';
-    
+
     const iframe = document.createElement('iframe');
-    iframe.src = '../Nird_Tycoon_2025/nird_tycoon.html'; 
+    iframe.src = '../Nird_Tycoon_2025/nird_tycoon.html';
     iframe.style.width = '100%';
     iframe.style.height = '100%';
     iframe.style.border = 'none';
-    
+
     overlay.appendChild(iframe);
     document.body.appendChild(overlay);
 
@@ -634,7 +629,7 @@ function startTycoonMinigame() {
         if (event.data === 'TYCOON_VICTORY') {
             closeTycoon(true);
         } else if (event.data === 'TYCOON_EXIT') {
-            closeTycoon(false); 
+            closeTycoon(false);
         }
     }, { once: true });
 }
