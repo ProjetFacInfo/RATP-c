@@ -12,7 +12,7 @@ const T_PORTAL_PUZZLE = 4;
 const T_PORTAL_FINAL = 5;  
 const T_PORTAL_HIDDEN = 6; 
 const T_PORTAL_ANCIENT = 7; 
-const T_PORTAL_JS = 8;      // <--- NOUVEAU : Portail JS
+const T_PORTAL_JS = 8;      // Portail JS (Audio)
 const T_SPAWN = 9;       
 
 // --- ÉTAT GLOBAL (Persistance & Chargement) ---
@@ -40,7 +40,6 @@ if (SAVED_DATA) {
 if (localStorage.getItem('has_won_laser_game') === 'true') {
     window.GAME_STATE.items.patch = true;
     window.GAME_STATE.items.key = true;
-    // localStorage.removeItem('has_won_laser_game'); // Optionnel : nettoyer
 }
 
 function isoToScreen(x, y) {
@@ -105,7 +104,7 @@ class VillageScene extends Phaser.Scene {
         g.clear(); g.lineStyle(2, 0xaaaaaa, 0.5); g.fillStyle(0x555555, 0.7); g.fillEllipse(32, 40, 40, 60); g.strokeEllipse(32, 40, 40, 60);
         g.fillStyle(0x333333); g.fillEllipse(32, 65, 30, 15); g.generateTexture('portal_ancient_tex', 64, 80);
 
-        // 12. NOUVEAU : Portail JS (Cyan Foncé / Teal)
+        // 12. Portail JS (Cyan Foncé / Teal)
         g.clear(); g.lineStyle(2, 0x00ffff, 0.8); g.fillStyle(0x0088aa, 0.7); g.fillEllipse(32, 40, 40, 60); g.strokeEllipse(32, 40, 40, 60);
         g.fillStyle(0x005577); g.fillEllipse(32, 65, 30, 15); g.generateTexture('portal_js_tex', 64, 80);
 
@@ -186,9 +185,7 @@ class VillageScene extends Phaser.Scene {
         const portalHiddenX=0, portalHiddenY=0;
         const portalAncientX=20, portalAncientY=22;
         const keyX=20, keyY=20;
-        
-        // --- NOUVEAU PORTAIL JS ---
-        const portalJsX=3, portalJsY=24; 
+        const portalJsX=3, portalJsY=24; // Portail Audio
 
         // 1. Spawn
         setM(spawnX, spawnY, T_SPAWN);
@@ -199,8 +196,6 @@ class VillageScene extends Phaser.Scene {
         drawJaggedPath(12, 12, forestEntryX, forestEntryY);
         drawJaggedPath(forestEntryX, forestEntryY, portalPuzzleX, portalPuzzleY);
         drawJaggedPath(12, 12, portalAncientX, portalAncientY);
-        
-        // Chemin vers le nouveau portail
         drawJaggedPath(spawnX, spawnY, portalJsX, portalJsY);
 
         // 3. Objets
@@ -208,7 +203,7 @@ class VillageScene extends Phaser.Scene {
         setM(portalPuzzleX, portalPuzzleY, T_PORTAL_PUZZLE); 
         setM(portalHiddenX, portalHiddenY, T_PORTAL_HIDDEN);
         setM(portalAncientX, portalAncientY, T_PORTAL_ANCIENT);
-        setM(portalJsX, portalJsY, T_PORTAL_JS); // <--- Placement
+        setM(portalJsX, portalJsY, T_PORTAL_JS);
         setM(keyX, keyY, T_KEY);
 
         // Points Protégés
@@ -219,7 +214,7 @@ class VillageScene extends Phaser.Scene {
             {x: portalPuzzleX, y: portalPuzzleY},
             {x: portalHiddenX, y: portalHiddenY},
             {x: portalAncientX, y: portalAncientY},
-            {x: portalJsX, y: portalJsY}, // <--- Protection
+            {x: portalJsX, y: portalJsY},
             {x: castleGateX, y: castleGateY},
             {x: forestEntryX, y: forestEntryY}
         ];
@@ -238,7 +233,7 @@ class VillageScene extends Phaser.Scene {
             }
         }
 
-        // Bulldozer (Garantie d'accès)
+        // Bulldozer
         const ensureAccessibility = (targetX, targetY) => {
             let cx = 12; let cy = 12;
             while(cx !== targetX || cy !== targetY) {
@@ -251,7 +246,7 @@ class VillageScene extends Phaser.Scene {
         ensureAccessibility(keyX, keyY);             
         ensureAccessibility(portalPuzzleX, portalPuzzleY); 
         ensureAccessibility(portalAncientX, portalAncientY);
-        ensureAccessibility(portalJsX, portalJsY); // <--- Accès garanti
+        ensureAccessibility(portalJsX, portalJsY);
 
         // Chemin secret
         for(let x=0; x<10; x++) { if(matrix[0][x] === T_TREE) matrix[0][x] = T_GRASS; }
@@ -260,9 +255,25 @@ class VillageScene extends Phaser.Scene {
         window.GAME_STATE.mapMatrix = matrix;
     }
 
+    // --- FONCTION AJOUT DE LABEL ---
+    addLabel(gx, gy, text) {
+        const pos = isoToScreen(gx, gy);
+        const label = this.add.text(this.centerX + pos.x, this.centerY + pos.y - 45, text, {
+            font: "14px monospace",
+            fill: "#ffffff",
+            backgroundColor: "#000000aa",
+            padding: { x: 4, y: 2 },
+            align: "center"
+        }).setOrigin(0.5);
+        label.setDepth(10000); // Au dessus de tout
+    }
+
     renderMap() {
         this.obstacles = [];
+        // Nettoyage des sprites
         this.children.list.filter(c => c.texture && c.texture.key !== 'tux').forEach(c => c.destroy());
+        // Nettoyage des Textes (Labels)
+        this.children.list.filter(c => c.type === 'Text').forEach(c => c.destroy());
         this.floorTiles.clear();
 
         for (let y = 0; y < MAP_SIZE; y++) {
@@ -280,21 +291,30 @@ class VillageScene extends Phaser.Scene {
                 tile.setDepth(-1000 + (y + x));
                 this.floorTiles.set(`${x},${y}`, tile);
 
-                // Objets
+                // --- OBJETS & LABELS ---
                 if (val === T_TREE) this.addObj(x, y, 'tree', true, 'tree', false);
                 else if (val === T_KEY && !window.GAME_STATE.items.key) this.addObj(x, y, 'item_key', false, 'item_key', false);
-                else if (val === T_PORTAL_PUZZLE) this.addObj(x, y, 'portal_tex', true, 'portal_puzzle', false);
-                else if (val === T_PORTAL_FINAL) this.addObj(x, y, 'portal_final_tex', true, 'portal_final', false);
+                
+                else if (val === T_PORTAL_PUZZLE) {
+                    this.addObj(x, y, 'portal_tex', true, 'portal_puzzle', false);
+                    this.addLabel(x, y, "PUZZLE");
+                }
+                else if (val === T_PORTAL_FINAL) {
+                    this.addObj(x, y, 'portal_final_tex', true, 'portal_final', false);
+                    this.addLabel(x, y, "FIN");
+                }
                 else if (val === T_PORTAL_ANCIENT) {
                     let p = this.addObj(x, y, 'portal_ancient_tex', true, 'portal_ancient', false);
                     p.sprite.setTint(0x888888); 
+                    this.addLabel(x, y, "TYCOON");
                 }
-                else if (val === T_PORTAL_HIDDEN && !window.GAME_STATE.items.csCut) {
-                    this.addObj(x, y, 'portal_hidden_tex', true, 'portal_hidden', false);
-                }
-                // --- Rendu Nouveau Portail ---
                 else if (val === T_PORTAL_JS) {
                     this.addObj(x, y, 'portal_js_tex', true, 'portal_js', false);
+                    this.addLabel(x, y, "AUDIO");
+                }
+                // Portail caché (Snake) : Pas de label, c'est secret !
+                else if (val === T_PORTAL_HIDDEN && !window.GAME_STATE.items.csCut) {
+                    this.addObj(x, y, 'portal_hidden_tex', true, 'portal_hidden', false);
                 }
             }
         }
@@ -472,15 +492,15 @@ class VillageScene extends Phaser.Scene {
                 return false;
             }
             if (obs.type === 'portal_ancient') {
-                this.showUI("Un portail obsolète. Il ne fonctionne plus.");
+                this.showUI("Chargement du NIRD Tycoon...");
+                startTycoonMinigame();
                 return false;
             }
             
             // --- NOUVEAU PORTAIL VISUALISATION ---
             if (obs.type === 'portal_js') {
                 this.showUI("Lancement de la Visualisation Audio...");
-                // Sauvegarde 'medium' comme demandé
-                localStorage.setItem("previous_map", "medium");
+                localStorage.setItem("previous_map", "end");
                 
                 this.time.delayedCall(500, () => window.location.href = "../visualisation-audio/visual-audio.html");
                 return false;
@@ -503,8 +523,134 @@ class VillageScene extends Phaser.Scene {
 }
 
 // =========================================================
-// INIT
+// SCÈNE 2 : PUZZLE
 // =========================================================
+class PuzzleScene extends Phaser.Scene {
+    constructor() { super({ key: 'PuzzleScene' }); }
+
+    create() {
+        this.cameras.main.setBackgroundColor('#2c3e50');
+        this.add.text(this.scale.width/2, 50, "Parcours le chemin sans revenir sur tes pas !", {
+            font: "20px monospace", fill: "#0f0"
+        }).setOrigin(0.5);
+
+        this.gridSize = 8;
+        this.tileSize = 50;
+        this.startX = (this.scale.width - (this.gridSize * this.tileSize)) / 2;
+        this.startY = 150;
+        
+        this.tiles = [];
+        this.playerPos = { x: 0, y: 0 };
+        this.activeTiles = 0;
+
+        const g = this.make.graphics();
+        g.fillStyle(0x000000, 0.5); g.fillRect(0,0,48,48); g.lineStyle(2, 0x00ff00); g.strokeRect(0,0,48,48);
+        g.generateTexture('tile_empty', 50, 50);
+        g.clear(); g.fillStyle(0x00ff00, 0.6); g.fillRect(0,0,48,48);
+        g.generateTexture('tile_active', 50, 50);
+
+        for(let y=0; y<this.gridSize; y++) {
+            let row = [];
+            for(let x=0; x<this.gridSize; x++) {
+                let t = this.add.image(this.startX + x*50, this.startY + y*50, 'tile_empty').setOrigin(0);
+                row.push({ spr: t, active: false });
+            }
+            this.tiles.push(row);
+        }
+
+        this.player = this.add.image(this.startX + 25, this.startY + 25, 'tux');
+        this.activateTile(0, 0);
+
+        this.cursors = this.input.keyboard.createCursorKeys();
+        this.input.keyboard.on('keydown', this.handleInput, this);
+    }
+
+    handleInput(event) {
+        let dx = 0; let dy = 0;
+        if(event.key === "ArrowUp") dy = -1;
+        else if(event.key === "ArrowDown") dy = 1;
+        else if(event.key === "ArrowLeft") dx = -1;
+        else if(event.key === "ArrowRight") dx = 1;
+
+        if(dx !== 0 || dy !== 0) {
+            let nx = this.playerPos.x + dx;
+            let ny = this.playerPos.y + dy;
+
+            if(nx >= 0 && nx < this.gridSize && ny >= 0 && ny < this.gridSize) {
+                this.playerPos = { x: nx, y: ny };
+                this.player.x = this.startX + nx*50 + 25;
+                this.player.y = this.startY + ny*50 + 25;
+
+                let tile = this.tiles[ny][nx];
+                if(tile.active) {
+                    this.cameras.main.shake(200);
+                    alert("Circuit brisé !");
+                    this.scene.start('VillageScene');
+                } else {
+                    this.activateTile(nx, ny);
+                    if(this.activeTiles === this.gridSize * this.gridSize) {
+                        alert("Victoire !");
+                        window.GAME_STATE.items.patch = true;
+                        this.scene.start('VillageScene');
+                    }
+                }
+            }
+        }
+    }
+
+    activateTile(x, y) {
+        this.tiles[y][x].active = true;
+        this.tiles[y][x].spr.setTexture('tile_active');
+        this.activeTiles++;
+    }
+}
+
+// =========================================================
+// MINIGAME
+// =========================================================
+function startTycoonMinigame() {
+    const overlay = document.createElement('div');
+    overlay.id = 'tycoon-overlay';
+    overlay.style.position = 'fixed';
+    overlay.style.top = '0';
+    overlay.style.left = '0';
+    overlay.style.width = '100%';
+    overlay.style.height = '100%';
+    overlay.style.zIndex = '9999';
+    overlay.style.backgroundColor = '#000';
+    
+    const iframe = document.createElement('iframe');
+    iframe.src = '../Nird_Tycoon_2025/nird_tycoon.html'; 
+    iframe.style.width = '100%';
+    iframe.style.height = '100%';
+    iframe.style.border = 'none';
+    
+    overlay.appendChild(iframe);
+    document.body.appendChild(overlay);
+
+    document.getElementById('game-container').style.display = 'none';
+
+    window.addEventListener('message', function(event) {
+        if (event.data === 'TYCOON_VICTORY') {
+            closeTycoon(true);
+        } else if (event.data === 'TYCOON_EXIT') {
+            closeTycoon(false); 
+        }
+    }, { once: true });
+}
+
+function closeTycoon(victory) {
+    const overlay = document.getElementById('tycoon-overlay');
+    if(overlay) overlay.remove();
+
+    document.getElementById('game-container').style.display = 'block';
+
+    if (victory) {
+        window.GAME_STATE.windosAlive = false;
+        game.scene.getScene('VillageScene').scene.restart();
+    }
+}
+
 const config = {
     type: Phaser.AUTO,
     width: window.innerWidth,
@@ -512,7 +658,7 @@ const config = {
     parent: 'game-container',
     pixelArt: true,
     backgroundColor: '#000000',
-    scene: [ VillageScene ],
+    scene: [ VillageScene, PuzzleScene ],
     scale: { mode: Phaser.Scale.RESIZE, autoCenter: Phaser.Scale.CENTER_BOTH }
 };
 

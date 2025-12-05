@@ -155,9 +155,8 @@ class VillageScene extends Phaser.Scene {
         const portalHiddenX=0, portalHiddenY=0; 
         const portalAncientX=20, portalAncientY=22; 
         
-        // --- COORDONNÉES DU PORTAIL AUDIO ---
+        // Coordonnées du portail audio
         const portalJsX=3, portalJsY=24; 
-        // ------------------------------------
 
         // Chemins
         setM(spawnX, spawnY, T_SPAWN);
@@ -165,7 +164,7 @@ class VillageScene extends Phaser.Scene {
         drawJaggedPath(castleGateX, castleGateY, 12, 12);
         drawJaggedPath(12, 12, forestEntryX, forestEntryY);
         drawJaggedPath(forestEntryX, forestEntryY, portalAncientX, portalAncientY);
-        drawJaggedPath(12, 12, portalJsX, portalJsY); // Chemin vers le portail audio
+        drawJaggedPath(12, 12, portalJsX, portalJsY);
 
         // Objets
         setM(portalFinalX, portalFinalY, T_PORTAL_FINAL);
@@ -173,7 +172,7 @@ class VillageScene extends Phaser.Scene {
         setM(portalAncientX, portalAncientY, T_PORTAL_ANCIENT);
         setM(portalJsX, portalJsY, T_PORTAL_JS);
 
-        // Protection (Pas d'arbres)
+        // Protection
         const protectedPoints = [
             {x: spawnX, y: spawnY},
             {x: portalFinalX, y: portalFinalY}, {x: portalHiddenX, y: portalHiddenY},
@@ -192,7 +191,7 @@ class VillageScene extends Phaser.Scene {
             }
         }
         
-        // Accès garanti
+        // Accès
         const ensureAccessibility = (targetX, targetY) => {
             let cx = 12; let cy = 12; 
             while(cx !== targetX || cy !== targetY) {
@@ -207,8 +206,26 @@ class VillageScene extends Phaser.Scene {
         window.GAME_STATE.mapMatrix = matrix;
     }
 
+    // --- FONCTION D'AJOUT DE LABEL ---
+    addLabel(gx, gy, text) {
+        const pos = gridToScreen(gx, gy);
+        // On place le texte légèrement au-dessus de la case
+        const label = this.add.text(pos.x, pos.y - 22, text, {
+            font: "12px monospace",
+            fill: "#ffffff",
+            backgroundColor: "#000000aa",
+            padding: { x: 4, y: 2 },
+            align: "center"
+        }).setOrigin(0.5);
+        this.levelContainer.add(label);
+        label.setDepth(100); // Au-dessus de tout
+    }
+
     renderMap() {
         this.obstacles = [];
+        
+        // Nettoyage complet du container sauf le joueur
+        // Cela supprime aussi les anciens textes car ils sont ajoutés au container
         this.levelContainer.each(child => {
             if (child !== this.player) child.destroy();
         });
@@ -231,11 +248,25 @@ class VillageScene extends Phaser.Scene {
                 let solid = false;
                 let type = 'prop';
 
+                // --- GESTION DES OBJETS ET LABELS ---
                 if (val === T_TREE) { objTex = 'tree'; solid = true; type='tree'; }
-                else if (val === T_PORTAL_FINAL) { objTex = 'portal_final_tex'; type='portal_final'; solid=false; }
-                else if (val === T_PORTAL_ANCIENT) { objTex = 'portal_ancient_tex'; type='portal_ancient'; solid=false; }
-                else if (val === T_PORTAL_HIDDEN && !window.GAME_STATE.items.csCut) { objTex = 'portal_hidden_tex'; type='portal_hidden'; solid=false; }
-                else if (val === T_PORTAL_JS) { objTex = 'portal_js_tex'; type='portal_js'; solid=false; }
+                
+                else if (val === T_PORTAL_FINAL) { 
+                    objTex = 'portal_final_tex'; type='portal_final'; solid=false;
+                    this.addLabel(x, y, "FIN");
+                }
+                else if (val === T_PORTAL_ANCIENT) { 
+                    objTex = 'portal_ancient_tex'; type='portal_ancient'; solid=false;
+                    this.addLabel(x, y, "TYCOON");
+                }
+                else if (val === T_PORTAL_JS) { 
+                    objTex = 'portal_js_tex'; type='portal_js'; solid=false;
+                    this.addLabel(x, y, "AUDIO");
+                }
+                // Portail caché : Pas de label !
+                else if (val === T_PORTAL_HIDDEN && !window.GAME_STATE.items.csCut) { 
+                    objTex = 'portal_hidden_tex'; type='portal_hidden'; solid=false; 
+                }
 
                 if (objTex) {
                     const obj = this.add.image(pos.x, pos.y, objTex);
@@ -337,17 +368,12 @@ class VillageScene extends Phaser.Scene {
                 startTycoonMinigame();
                 return false;
             }
-            // --- PORTAIL VERS VISUALISATION AUDIO ---
             if (obs.type === 'portal_js') {
-                this.showUI("Lancement de la Visualisation Audio...");
-                
+                this.showUI("Voyage vers la zone suivante...");
                 localStorage.setItem("previous_map", "intro");
-                
                 setTimeout(() => {
-                    // --- REDIRECTION MODIFIÉE ICI ---
                     window.location.href = '../visualisation-audio/visual-audio.html'; 
                 }, 1000);
-
                 return false;
             }
 
