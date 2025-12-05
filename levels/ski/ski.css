@@ -1,0 +1,85 @@
+body {
+    margin: 0;
+    overflow: hidden;
+    font-family: 'Arial', sans-serif;
+    background: #aaccff;
+}
+#ui-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+h1 {
+    color: #ffffff;
+    font-size: 50px;
+    margin-bottom: 10px;
+    font-weight: 800;
+    letter-spacing: 2px;
+}
+p {
+    color: #e6f0ff;
+    font-size: 20px;
+    font-weight: 500;
+}
+#power-bar-container {
+    width: 300px;
+    height: 30px;
+    border: 3px solid #ffffff;
+    border-radius: 15px;
+    margin-top: 30px;
+    overflow: hidden;
+    background: rgba(0,0,0,0.4);
+    display: none;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+#power-bar {
+    width: 0%;
+    height: 100%;
+    background: linear-gradient(90deg, #ffeb3b, #ff5722);
+    border-radius: 10px;
+}
+#message {
+    display: none;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 40px;
+    border-radius: 20px;
+    color: #333;
+    max-width: 80%;
+    box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+    pointer-events: auto;
+}
+.lose-text {
+    color: #d32f2f;
+    font-size: 32px;
+    font-weight: 900;
+}
+.win-text {
+    color: #388e3c;
+    font-size: 32px;
+    font-weight: 900;
+}
+button {
+    margin-top: 25px;
+    padding: 15px 30px;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    background: #fab905;
+    color: black;
+    border: none;
+    border-radius: 10px;
+    transition: transform 0.1s;
+}
+button:hover {
+    transform: scale(1.05);
+    background: #ffc107;
+}

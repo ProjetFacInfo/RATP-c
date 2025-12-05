@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Tux Toboggan - Version Finale</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="ui-container">
+    <div id="start-screen">
+        <h1>Tux Toboggan</h1>
+        <p>Prêt à plonger ?<br>Maintenez <b>ESPACE</b> pour charger, relâchez pour glisser.</p>
+    </div>
+    <div id="power-bar-container"><div id="power-bar"></div></div>
+    <div id="message">
+        <div id="result-text"></div>
+        <button onclick="resetGame()">Rejouer</button>
+    </div>
+</div>
+
+<script type="module" src="https://unpkg.com/three@0.154.0/build/three.module.js"></script>
+<script type="module" src="main.js"></script>
+</body>
+</html>
