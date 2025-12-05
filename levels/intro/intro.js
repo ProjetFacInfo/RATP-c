@@ -409,7 +409,7 @@ class VillageScene extends Phaser.Scene {
                 this.saveProgress();
                 obs.sprite.destroy();
                 this.obstacles.splice(this.obstacles.indexOf(obs), 1);
-                setTimeout(() => window.location.href = "../snake/snake.html", 1000);
+                setTimeout(() => window.location.href = "../snake/snake.html", 500);
                 return false;
             }
             if (obs.type === 'enemy') {
