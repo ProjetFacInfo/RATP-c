@@ -297,7 +297,7 @@ class VillageScene extends Phaser.Scene {
 
                 else if (val === T_PORTAL_PUZZLE) {
                     this.addObj(x, y, 'portal_tex', true, 'portal_puzzle', false);
-                    this.addLabel(x, y, "PUZZLE");
+                    this.addLabel(x, y, "LASER GAME");
                 }
                 else if (val === T_PORTAL_FINAL) {
                     this.addObj(x, y, 'portal_final_tex', true, 'portal_final', false);
