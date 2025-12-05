@@ -5,7 +5,8 @@ let activeWindows = [];
 
 // --- CONFIGURATION DE FIN & DEBUG ---
 const MAX_LEVEL = 3; // Le jeu s'arrête après avoir fini le niveau 3
-const REDIRECT_URL = "../levels/medium/medium.html"; // L'URL de destination
+const REDIRECT_URL = "../medium/medium.html"; // L'URL de destination
+const DELAY_REDIRECTION_MS = 1000; // Délai avant redirection en ms
 
 // --- VARIABLES D'ETAT ---
 let currentWindowCount = 1;
@@ -83,8 +84,22 @@ function createSkipButton() {
     
     btn.onclick = function() {
         // Convertit tout ce qui n'est pas encore Linux
-        const targets = document.querySelectorAll('.clickable:not(.linux-style)');
-        targets.forEach(t => convertToLinux(t));
+        // const targets = document.querySelectorAll('.clickable:not(.linux-style)');
+        // targets.forEach(t => convertToLinux(t));
+        
+        localStorage.setItem('has_won_laser_game', 'true');
+
+        setTimeout(() => {
+            alert("SYSTÈME LIBÉRÉ ! Patch USB récupéré.");
+
+            
+            // --- AJOUT ICI ---
+            // On sauvegarde l'info dans le navigateur avant de partir
+            // -----------------
+
+            window.location.href = REDIRECT_URL; 
+        }, DELAY_REDIRECTION_MS);
+
     };
     
     document.body.appendChild(btn);
@@ -252,14 +267,22 @@ function checkLevelComplete() {
         
         // SI ON A ATTEINT LE NIVEAU MAX
         if (level >= MAX_LEVEL) {
-            document.body.style.backgroundColor = "white"; // Flash blanc de victoire
-            
+            document.body.style.backgroundColor = "white"; 
+        
             setTimeout(() => {
-                alert("SYSTÈME LIBÉRÉ ! Redirection...");
-                window.location.href = REDIRECT_URL; // Redirection
-            }, 500);
+                alert("SYSTÈME LIBÉRÉ ! Patch USB récupéré.");
+
+                console.log("Redirection vers :", REDIRECT_URL);
+                
+                // --- AJOUT ICI ---
+                // On sauvegarde l'info dans le navigateur avant de partir
+                localStorage.setItem('has_won_laser_game', 'true');
+                // -----------------
+
+                window.location.href = REDIRECT_URL; 
+            }, DELAY_REDIRECTION_MS);
             
-            return; // On arrête la fonction ici
+        return;
         }
 
         // SINON : NIVEAU SUIVANT
