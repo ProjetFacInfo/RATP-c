@@ -426,7 +426,7 @@ const spawnX=2, spawnY=22;
             if (obs.type === 'portal_puzzle') {
                 if(window.GAME_STATE.items.key) {
                     this.showUI("Lancement du Puzzle...");
-                    this.time.delayedCall(500, () => this.scene.start('PuzzleScene'));
+                    this.time.delayedCall(500, () => window.location.href = "../../La_Zerguem/la_zerguem.html");
                 } else {
                     this.showUI("Portail crypté (Besoin Clé).");
                 }

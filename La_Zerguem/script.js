@@ -1,11 +1,15 @@
-// --- CONFIGURATION ---
+// --- CONFIGURATION DU JEU ---
 let level = 1;
 const speedGain = 0.8;
 let activeWindows = [];
 
-// --- NOUVELLES VARIABLES D'ETAT ---
-let currentWindowCount = 1;  // Nombre de fenêtres actuel
-let currentDensity = 0;      // Nombre d'éléments BONUS par fenêtre
+// --- CONFIGURATION DE FIN & DEBUG ---
+const MAX_LEVEL = 3; // Le jeu s'arrête après avoir fini le niveau 3
+const REDIRECT_URL = "../levels/medium/medium.html"; // L'URL de destination
+
+// --- VARIABLES D'ETAT ---
+let currentWindowCount = 1;
+let currentDensity = 0;
 
 const windowsSetupText = {
     'title-text' : "System Error",
@@ -17,7 +21,6 @@ const windowsSetupText = {
     'title-btn' : "X",
     'label-text' : "Status :",
     'status-bar' : "En attente...",
-    // Textes pour les éléments bonus
     'extra-checkbox' : "Mode sans échec",
     'extra-radio' : "Administrateur",
     'extra-link' : "Aide..."
@@ -46,13 +49,12 @@ function initLevel() {
     container.innerHTML = ''; 
     activeWindows = []; 
 
-    // Si c'est le tout premier niveau, on reset les stats
     if (level === 1) {
         currentWindowCount = 1;
         currentDensity = 0;
+        createSkipButton(); // On crée le bouton de debug au début
     }
 
-    // On crée les fenêtres selon les variables actuelles
     for (let i = 0; i < currentWindowCount; i++) {
         spawnWindow(container, i);
     }
@@ -61,20 +63,44 @@ function initLevel() {
     updateScoreUI();
 }
 
-// --- FONCTION DE GENERATION DE CONTENU ALEATOIRE ---
+// --- FONCTION SKIP (DEBUG) ---
+function createSkipButton() {
+    // Évite de créer le bouton deux fois
+    if(document.getElementById('debug-skip-btn')) return;
+
+    const btn = document.createElement('button');
+    btn.id = 'debug-skip-btn';
+    btn.innerText = "SKIP LEVEL >>";
+    btn.style.position = "fixed";
+    btn.style.top = "10px";
+    btn.style.right = "10px";
+    btn.style.zIndex = "9999";
+    btn.style.background = "red";
+    btn.style.color = "white";
+    btn.style.border = "2px solid white";
+    btn.style.fontWeight = "bold";
+    btn.style.cursor = "pointer";
+    
+    btn.onclick = function() {
+        // Convertit tout ce qui n'est pas encore Linux
+        const targets = document.querySelectorAll('.clickable:not(.linux-style)');
+        targets.forEach(t => convertToLinux(t));
+    };
+    
+    document.body.appendChild(btn);
+}
+
+// --- GENERATION CONTENU ---
 function generateExtraContent(quantity) {
     let html = '';
     for (let i = 0; i < quantity; i++) {
         const type = Math.random();
         
         if (type < 0.33) {
-            // Ajouter un Input
             html += `<input type="text" value="Code erreur..." class="win-style clickable input-text" style="width: 90%; margin-top:5px;">`;
         } else if (type < 0.66) {
-            // Ajouter un Bouton supplémentaire
             html += `<div class="win-btn win-style clickable btn-text" style="display:block; margin:5px auto; width: 60%;">Annuler</div>`;
         } else {
-            // Ajouter une "Checkbox" (simulée)
             html += `
             <div class="clickable extra-checkbox" style="font-size:12px; margin:5px;">
                 <span style="border:1px solid gray; background:white; padding:0 3px;">X</span> 
@@ -85,17 +111,13 @@ function generateExtraContent(quantity) {
     return html;
 }
 
-// --- SPAWN WINDOW ---
 function spawnWindow(container, index) {
     const win = document.createElement('div');
     win.className = 'win-window win-style moving-window clickable';
     
-    // Taille dynamique : plus il y a d'éléments, plus la fenêtre est grande
-    // On laisse la hauteur en 'auto' via le CSS, mais on s'assure qu'elle ne dépasse pas l'écran
-    
     const winWidth = 380;
     const maxX = window.innerWidth - winWidth - 20; 
-    const maxY = window.innerHeight - 300; // Marge de sécurité hauteur
+    const maxY = window.innerHeight - 300; 
     
     const startX = Math.max(0, Math.random() * maxX);
     const startY = Math.max(0, Math.random() * maxY);
@@ -103,7 +125,6 @@ function spawnWindow(container, index) {
     win.style.left = startX + 'px';
     win.style.top = startY + 'px';
     
-    // On génère le contenu supplémentaire ici
     const extraContent = generateExtraContent(currentDensity);
 
     win.innerHTML = `
@@ -111,17 +132,14 @@ function spawnWindow(container, index) {
             <span class="clickable title-text">System Error</span>
             <div class="title-btn clickable title-btn">X</div>
         </div>
-        <div class="content-area" style="padding:10px; background:white; display:flex; flex-direction:column; gap:5px;">
+        <div class="content-area clickable" style="padding:10px; background:white; display:flex; flex-direction:column; gap:5px;">
             <h2 class="clickable title-h2" style="margin-top:0;">Erreur Critique</h2>
             <p class="clickable msg-p">Windows tente de résoudre le problème...</p>
-            
             ${extraContent}
-
             <div style="display: flex; gap: 10px; justify-content: center; margin: 10px 0;">
                 <div class="win-btn win-style clickable btn1 btn-text">Déboguer</div>
                 <div class="win-btn win-style clickable btn2 btn-text">Fermer</div>
             </div>
-            
             <label class="clickable label-text">Status :</label>
             <input type="text" value="Non répondant..." class="win-style clickable input-text" style="width: 90%;">
         </div>
@@ -130,12 +148,10 @@ function spawnWindow(container, index) {
     
     container.appendChild(win);
 
-    // Physique
     let vx = 0, vy = 0;
     if (level > 1) {
         let baseSpeed = level * speedGain;
-        // Légère variation : les grosses fenêtres (haute densité) vont un peu plus lentement
-        let weight = 1 - (currentDensity * 0.05); // Ralentit de 5% par élément extra
+        let weight = 1 - (currentDensity * 0.05);
         let actualSpeed = Math.max(0.5, baseSpeed * weight); 
         
         const angle = Math.random() * Math.PI * 2;
@@ -145,14 +161,11 @@ function spawnWindow(container, index) {
 
     activeWindows.push({
         element: win,
-        x: startX,
-        y: startY,
-        vx: vx,
-        vy: vy
+        x: startX, y: startY, vx: vx, vy: vy
     });
 }
 
-// --- BOUCLE DE JEU ---
+// --- PHYSIQUE ---
 function gameLoop() {
     const maxX = window.innerWidth;
     const maxY = window.innerHeight - 40; 
@@ -161,7 +174,6 @@ function gameLoop() {
         winObj.x += winObj.vx;
         winObj.y += winObj.vy;
 
-        // Rebonds
         if (winObj.x <= 0) {
             winObj.x = 0; winObj.vx *= -1; playBounceSound();
         } else if (winObj.x + winObj.element.offsetWidth >= maxX) {
@@ -186,6 +198,9 @@ gameLoop();
 
 // --- INTERACTIONS ---
 document.addEventListener('mousedown', (e) => {
+    // On ne tire pas si on clique sur le bouton SKIP
+    if(e.target.id === 'debug-skip-btn') return;
+
     shootLaser(e.clientX, e.clientY);
     const target = e.target.closest('.clickable');
 
@@ -205,7 +220,6 @@ function changeTextContent(element) {
     const randomPhrase = phrases[Math.floor(Math.random() * phrases.length)];
     let result = null;
 
-    // Mapping intelligent
     for (const aClass of element.classList) {
         if (linuxSetupText[aClass] !== undefined) {
             result = linuxSetupText[aClass];
@@ -213,16 +227,12 @@ function changeTextContent(element) {
         }
     }
 
-    // Gestion spécifique des spans (comme notre fausse checkbox)
-    if(element.tagName === 'SPAN') {
-        // Ne rien faire de spécial, le parent gère souvent le style
-    }
+    if(element.tagName === 'SPAN') { /* Hack pour checkbox */ }
 
     if (result !== null) {
         if (element.tagName === 'INPUT') element.value = result;
-        else if (element.children.length === 0) element.innerText = result; // Modifie le texte seulement si pas d'enfants
+        else if (element.children.length === 0) element.innerText = result; 
         else {
-             // Si c'est un conteneur (ex: la checkbox div > span), on cherche le texte à l'intérieur
              const textSpan = element.querySelector('span:last-child');
              if(textSpan) textSpan.innerText = result;
         }
@@ -232,34 +242,35 @@ function changeTextContent(element) {
     }
 }
 
+// --- VERIFICATION VICTOIRE (MODIFIÉE) ---
 function checkLevelComplete() {
     const allClickables = document.querySelectorAll('#game-container .clickable');
     const allLinux = document.querySelectorAll('#game-container .linux-style');
     
     if (allClickables.length > 0 && allLinux.length === allClickables.length) {
         playLevelUpSound();
+        
+        // SI ON A ATTEINT LE NIVEAU MAX
+        if (level >= MAX_LEVEL) {
+            document.body.style.backgroundColor = "white"; // Flash blanc de victoire
+            
+            setTimeout(() => {
+                alert("SYSTÈME LIBÉRÉ ! Redirection...");
+                window.location.href = REDIRECT_URL; // Redirection
+            }, 500);
+            
+            return; // On arrête la fonction ici
+        }
+
+        // SINON : NIVEAU SUIVANT
         level++;
         
-        // --- LOGIQUE DE PROGRESSION ALEATOIRE ---
-        // Pile ou face :
-        // 50% de chance d'ajouter une nouvelle fenêtre
-        // 50% de chance d'ajouter plus d'éléments dans les fenêtres existantes
-        
         const randomChoice = Math.random();
-        
-        // Petite sécurité : si on a déjà 5 fenêtres, on force la densité pour pas saturer l'écran
-        // Inversement : si on a déjà 6 éléments bonus, on force une nouvelle fenêtre
-        if (currentWindowCount >= 5) {
-            currentDensity++;
-        } else if (currentDensity >= 6) {
-            currentWindowCount++;
-        } else {
-            // Choix normal
-            if (randomChoice > 0.5) {
-                currentWindowCount++; // Nouvelle fenêtre
-            } else {
-                currentDensity++; // Fenêtre plus complexe
-            }
+        if (currentWindowCount >= 5) currentDensity++;
+        else if (currentDensity >= 6) currentWindowCount++;
+        else {
+            if (randomChoice > 0.5) currentWindowCount++;
+            else currentDensity++;
         }
 
         document.body.style.backgroundColor = "black";
@@ -280,7 +291,7 @@ function updateScoreUI() {
     document.getElementById('score').innerText = percent;
 }
 
-// --- AUDIO (Inchangé) ---
+// --- AUDIO ---
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
 function shootLaser(x, y) {
