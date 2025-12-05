@@ -147,7 +147,7 @@ function spawnWindow(container, index) {
             <span class="clickable title-text">System Error</span>
             <div class="title-btn clickable title-btn">X</div>
         </div>
-        <div class="content-area clickable" style="padding:10px; background:white; display:flex; flex-direction:column; gap:5px;">
+        <div class="content-area" style="padding:10px; background:white; display:flex; flex-direction:column; gap:5px;">
             <h2 class="clickable title-h2" style="margin-top:0;">Erreur Critique</h2>
             <p class="clickable msg-p">Windows tente de résoudre le problème...</p>
             ${extraContent}
