@@ -45,16 +45,25 @@
     }
 
     /* 4. LOGIQUE JEU */
-    // On rend cette fonction accessible globalement pour le snake.html
+
     window.launchSnakeGame = function() {
         resetGame();
         gameInterval = setInterval(gameLoop, 140);
     }
 
+	function returnToPrincipalGame(win) {
+		if (win) {
+			setTimeout(() => {
+				window.location.href = "../medium/medium.html";
+			}, 3000);
+		} else {
+			window.location.href = "../medium/medium.html";
+		}
+	}
+
     function closeSnake() {
         clearInterval(gameInterval);
-        // REDIRECTION VERS L'ACCUEIL
-        window.location.href = "index.html";
+		returnToPrincipalGame(false);
     }
 
     function resetGame() {
@@ -125,10 +134,7 @@
         ctx.fillText("APPLE NOT FOUND", canvas.width/2, canvas.height/2 + 30);
         ctx.fillText("REDIRECTING...", canvas.width/2, canvas.height/2 + 60);
 
-        // REDIRECTION AUTOMATIQUE APRES ERREUR
-        setTimeout(() => {
-            window.location.href = "index.html";
-        }, 3000);
+		returnToPrincipalGame(true);
     }
 
     /* 5. DESSIN */
