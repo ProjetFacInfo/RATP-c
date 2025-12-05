@@ -283,3 +283,27 @@ function onWindowResize() {
 
 // Lancement
 init();
+
+// --- GESTION DU BOUTON RETOUR (NAVIGATION) ---
+const exitBtn = document.getElementById('exit-btn');
+
+exitBtn.addEventListener('click', () => {
+    // 1. Lire la provenance sauvegardée par le portail du village
+    const previousMap = localStorage.getItem('previous_map');
+    
+    let targetUrl = '../intro/intro.html'; // Valeur par défaut (sécurité)
+
+    // 2. Déterminer la destination
+    if (previousMap === 'medium') {
+        targetUrl = '../medium/medium.html';
+    } else if (previousMap === 'end') {
+        targetUrl = '../end/end.html';
+    } else if (previousMap === 'intro') {
+        targetUrl = '../intro/intro.html';
+    }
+
+    console.log(`Retour vers : ${previousMap} -> ${targetUrl}`);
+
+    // 3. Redirection
+    window.location.href = targetUrl;
+});

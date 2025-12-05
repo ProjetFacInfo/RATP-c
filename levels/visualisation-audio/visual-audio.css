@@ -59,3 +59,29 @@ input[type="file"] { display: none; }
 #heat-bar {
     width: 0%; height: 100%; background: #ff0000; transition: width 0.1s;
 }
+
+
+.btn-corner {
+    position: absolute;
+    top: 20px; 
+    right: 20px;
+    padding: 10px 20px;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: bold;
+    color: #000;
+    background: #00ff00; /* Vert Terminal */
+    border: 2px solid #00ff00;
+    cursor: pointer;
+    box-shadow: 0 0 15px #00ff00;
+    z-index: 1000; /* Au-dessus de tout */
+    text-transform: uppercase;
+    transition: all 0.2s;
+}
+
+.btn-corner:hover {
+    background: #000;
+    color: #00ff00;
+    box-shadow: 0 0 25px #00ff00;
+    transform: scale(1.05);
+}
