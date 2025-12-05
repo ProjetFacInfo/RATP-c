@@ -414,6 +414,15 @@ const spawnX=2, spawnY=22;
         console.log("Progression sauvegardée dans le LocalStorage.");
     }
 
+    saveProgress(name) {
+        const data = {
+            gameState: window.GAME_STATE,
+            playerPos: this.playerIso
+        };
+        localStorage.setItem(name, JSON.stringify(data));
+        console.log("Progression sauvegardée dans le LocalStorage.");
+    }
+
     updateInventoryUI() {
         const slot1 = document.getElementById('slot-1');
         const slot2 = document.getElementById('slot-2');
@@ -454,67 +463,6 @@ const spawnX=2, spawnY=22;
                 // 1. Mettre à jour l'inventaire
                 window.GAME_STATE.items.csCut = true;
                 this.updateInventoryUI();
-// --- CONFIGURATION ISOMÉTRIQUE ---
-const TILE_WIDTH = 64;
-const TILE_HEIGHT = 32;
-const MAP_SIZE = 25;
-
-// --- CODES DE LA MATRICE (Légende) ---
-const T_GRASS = 0;       // Herbe simple
-const T_PATH = 1;        // Chemin (Jaune)
-const T_TREE = 2;        // Arbre
-const T_KEY = 3;         // Clé (Labyrinthe)
-const T_PORTAL_PUZZLE = 4; // Portail vers le Puzzle
-const T_PORTAL_FINAL = 5;  // Portail de fin (Dans le Château)
-const T_PORTAL_HIDDEN = 6; // Portail Secret (CS-Coupe)
-const T_PORTAL_ANCIENT = 7; // 4ème Portail (Décoratif/Lore)
-const T_SPAWN = 9;       // Point de départ
-
-// --- ÉTAT GLOBAL (Persistance) ---
-// --- ÉTAT GLOBAL (Persistance & Chargement) ---
-const SAVED_DATA = localStorage.getItem('nird_rpg_save');
-let startPlayerPos = null; // Variable temporaire pour la position
-
-// --- ÉTAT GLOBAL (Persistance) ---
-window.GAME_STATE = {
-    mapMatrix: null,
-    items: {
-        key: false,     // Clé du labyrinthe
-        patch: false,   // Clé USB (Puzzle)
-        csCut: false    // CS-Coupe (Secret)
-    },
-    windosAlive: true   // Ennemi
-};
-
-// 1. On vérifie si le joueur revient victorieux du laser game
-if (localStorage.getItem('has_won_laser_game') === 'true') {
-
-    
-    // 2. On donne l'item
-    window.GAME_STATE.items.patch = true;
-    window.GAME_STATE.items.key = true;
-    // 3. IMPORTANT : On supprime immédiatement l'info de la mémoire
-    // Pour que si on reload la page (F5), on recommence sans l'item
-    localStorage.removeItem('has_won_laser_game');
-}
-
-if (SAVED_DATA) {
-    console.log("Sauvegarde chargée !");
-    const parsed = JSON.parse(SAVED_DATA);
-    window.GAME_STATE = parsed.gameState;
-    startPlayerPos = parsed.playerPos;
-} else {
-    // État par défaut si aucune sauvegarde
-    window.GAME_STATE = {
-        mapMatrix: null,
-        items: {
-            key: false,     // Clé du labyrinthe
-            patch: false,   // Clé USB (Puzzle)
-            csCut: false    // CS-Coupe (Secret)
-        },
-        windosAlive: true   // Ennemi
-    };
-}
 
                 // 2. SAUVEGARDER LE JEU MAINTENANT
                 this.saveProgress();
