@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NIRD VISUALIZER - GIANT CORE</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@500&display=swap');
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #000;
+            font-family: 'Fira Code', monospace;
+            color: #00ff00;
+        }
+
+        #overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            background: rgba(0,0,0,0.95);
+            z-index: 999;
+            transition: opacity 0.5s;
+        }
+        
+        #overlay.hidden { opacity: 0; pointer-events: none; }
+
+        h1 {
+            font-size: 3rem; color: #fff; margin-bottom: 5px;
+            text-shadow: 0 0 10px #00ff00;
+            text-align: center;
+        }
+        
+        .btn {
+            margin-top: 20px;
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            font-family: inherit;
+            color: #000;
+            background: #00ff00;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 0 20px #00ff00;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+        .btn:hover { transform: scale(1.1); color: #fff; }
+
+        input[type="file"] { display: none; }
+        
+        #hud {
+            position: absolute; top: 20px; left: 20px;
+            pointer-events: none;
+            font-size: 12px; color: #00ff00;
+            text-shadow: 0 0 5px #00ff00;
+            background: rgba(0, 20, 0, 0.5);
+            padding: 10px;
+            border: 1px solid #00ff00;
+        }
+        
+        #heat-bar-container {
+            margin-top: 5px;
+            width: 100%; height: 5px; background: #333;
+        }
+        #heat-bar {
+            width: 0%; height: 100%; background: #ff0000; transition: width 0.1s;
+        }
+    </style>
+    
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+<body>
+
+    <div id="overlay">
+        <h1>KERNEL ANALYZER</h1>
+        <div style="color:#888; margin-bottom: 20px;">Visualization du Spectre Audio</div>
+        <label for="audio-input" class="btn">CHARGER FICHIER AUDIO</label>
+        <input type="file" id="audio-input" accept="audio/*">
+        <p style="color:#ffff00; margin-top: 20px;">Attention : Surchauffe du noyau (Rouge) = Pingouins !</p>
+    </div>
+
+    <div id="hud">
+        SYSTEM: NIRD_KERNEL<br>
+        STATUS: MONITORING<br>
+        CORE SIZE: MASSIVE<br>
+        CORE TEMP: <span id="intensity">0%</span>
+        <div id="heat-bar-container"><div id="heat-bar"></div></div>
+        PENGUINS EJECTED: <span id="penguin-count">0</span>
+    </div>
+
+    <audio id="audio" style="display:none"></audio>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+
+        let scene, camera, renderer, composer;
+        let core, gridTop, gridBottom;
+        let spectrumGroup;
+        let windowsGroup = [];
+        
+        let penguinsArray = [];
+        let penguinTex;
+        let canLaunch = true; 
+        
+        let analyser, dataArray, audioContext;
+        let baseFov = 75;
+
+        // Textures dynamiques
+        function createTextTexture(text, color, bgColor) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256; canvas.height = 128;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = bgColor; ctx.fillRect(0,0, 256, 128);
+            ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 8; ctx.strokeRect(0,0, 256, 128);
+            ctx.fillStyle = color; ctx.font = "bold 40px Consolas";
+            ctx.textAlign = "center"; ctx.textBaseline = "middle";
+            ctx.fillText(text, 128, 64);
+            return new THREE.CanvasTexture(canvas);
+        }
+        const texBSOD = createTextTexture("ERROR", "#fff", "#0000aa");
+        const texWARN = createTextTexture("ALERT", "#000", "#ffcc00");
+
+        function createPenguinTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 128; canvas.height = 128; 
+            const ctx = canvas.getContext('2d');
+            
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+
+            ctx.fillStyle = "#ffffff";
+            ctx.beginPath(); ctx.ellipse(centerX, centerY, 52, 62, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = "#111111";
+            ctx.beginPath(); ctx.ellipse(centerX, centerY, 48, 58, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = "#f0f0f0"; 
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY - 20);
+            ctx.bezierCurveTo(centerX + 40, centerY - 10, centerX + 30, centerY + 50, centerX, centerY + 55);
+            ctx.bezierCurveTo(centerX - 30, centerY + 50, centerX - 40, centerY - 10, centerX, centerY - 20);
+            ctx.fill();
+            ctx.fillStyle = "#ffffff";
+            ctx.beginPath(); ctx.arc(centerX - 15, centerY - 25, 10, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(centerX + 15, centerY - 25, 10, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = "#000000";
+            ctx.beginPath(); ctx.arc(centerX - 15, centerY - 25, 5, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(centerX + 15, centerY - 25, 5, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = "#ff9900";
+            ctx.beginPath(); ctx.moveTo(centerX - 10, centerY - 5); ctx.lineTo(centerX + 10, centerY - 5); ctx.lineTo(centerX, centerY + 15); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(centerX - 25, centerY + 55, 15, 8, Math.PI / 4, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(centerX + 25, centerY + 55, 15, 8, -Math.PI / 4, 0, Math.PI * 2); ctx.fill();
+
+            const tex = new THREE.CanvasTexture(canvas);
+            tex.minFilter = THREE.NearestFilter; 
+            return tex;
+        }
+
+        function init() {
+            scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x000000, 0.02);
+
+            camera = new THREE.PerspectiveCamera(baseFov, window.innerWidth / window.innerHeight, 0.1, 1000);
+            
+            // --- MODIF CAMERA : On recule pour voir le GROS noyau ---
+            camera.position.set(0, 0, 50); 
+            // --------------------------------------------------------
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            document.body.appendChild(renderer.domElement);
+
+            const renderScene = new RenderPass(scene, camera);
+            const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
+            bloomPass.threshold = 0; bloomPass.strength = 1.6; bloomPass.radius = 0.5;
+
+            composer = new EffectComposer(renderer);
+            composer.addPass(renderScene);
+            composer.addPass(bloomPass);
+
+            penguinTex = createPenguinTexture();
+
+            createWorld();
+            createSpectrum();
+            
+            window.addEventListener('resize', onWindowResize);
+            animate();
+        }
+
+        function createWorld() {
+            // --- MODIF CŒUR : BEAUCOUP PLUS GROS ---
+            const geoCore = new THREE.IcosahedronGeometry(12, 2); // Avant: 4
+            const matCore = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
+            core = new THREE.Mesh(geoCore, matCore);
+            
+            // Noyau interne adapté
+            const inner = new THREE.Mesh(new THREE.IcosahedronGeometry(9, 1), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+            core.add(inner);
+            scene.add(core);
+            // ---------------------------------------
+
+            const gridHelper = new THREE.GridHelper(200, 40, 0x004400, 0x002200);
+            gridBottom = gridHelper; gridBottom.position.y = -15; scene.add(gridBottom); // On écarte la grille aussi
+            gridTop = gridHelper.clone(); gridTop.position.y = 15; scene.add(gridTop);
+
+            const planeGeo = new THREE.PlaneGeometry(3, 1.5);
+            for(let i=0; i<40; i++) {
+                const mat = Math.random()>0.5 ? new THREE.MeshBasicMaterial({ map: texBSOD }) : new THREE.MeshBasicMaterial({ map: texWARN });
+                const mesh = new THREE.Mesh(planeGeo, mat);
+                const angle = Math.random() * Math.PI * 2;
+                // On écarte aussi les fenêtres
+                const r = 35 + Math.random() * 30; 
+                mesh.position.set(Math.cos(angle)*r, Math.sin(angle)*r, (Math.random()-0.5)*100);
+                mesh.userData = { baseX: mesh.position.x, baseY: mesh.position.y, speed: Math.random()*0.5 + 0.1 };
+                scene.add(mesh);
+                windowsGroup.push(mesh);
+            }
+        }
+
+        function createSpectrum() {
+            spectrumGroup = new THREE.Group();
+            const count = 64; 
+            // --- MODIF SPECTRE : ÉCARTÉ DU CENTRE ---
+            const radius = 22; // Avant: 8
+            // ----------------------------------------
+            const barGeo = new THREE.BoxGeometry(0.5, 0.5, 0.5); // Barres un peu plus grosses
+            const barMat = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+            for(let i=0; i<count; i++) {
+                const mesh = new THREE.Mesh(barGeo, barMat);
+                const angle = (i / count) * Math.PI * 2;
+                mesh.position.set(Math.cos(angle) * radius, Math.sin(angle) * radius, 0);
+                mesh.rotation.z = angle;
+                spectrumGroup.add(mesh);
+            }
+            scene.add(spectrumGroup);
+        }
+
+        function launchPenguin() {
+            const material = new THREE.SpriteMaterial({ map: penguinTex, color: 0xeeeeee });
+            const sprite = new THREE.Sprite(material);
+            
+            sprite.scale.set(8, 8, 1);
+            sprite.position.set(0, 0, 0); 
+
+            const angle = Math.random() * Math.PI * 2;
+            const speedXY = 0.1 + Math.random() * 0.4; 
+            const speedZ = 0.2 + Math.random() * 1.2;
+
+            const velocity = new THREE.Vector3(
+                Math.cos(angle) * speedXY,
+                Math.sin(angle) * speedXY,
+                speedZ
+            );
+
+            penguinsArray.push({ mesh: sprite, velocity: velocity });
+            scene.add(sprite);
+        }
+
+        const fileInput = document.getElementById('audio-input');
+        const audioEl = document.getElementById('audio');
+        
+        fileInput.addEventListener('change', function() {
+            const file = this.files[0];
+            if(file) {
+                if(!audioContext) {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    analyser = audioContext.createAnalyser();
+                    analyser.fftSize = 128;
+                    dataArray = new Uint8Array(analyser.frequencyBinCount);
+                    const src = audioContext.createMediaElementSource(audioEl);
+                    src.connect(analyser);
+                    analyser.connect(audioContext.destination);
+                }
+                audioEl.src = URL.createObjectURL(file);
+                audioEl.play();
+                document.getElementById('overlay').classList.add('hidden');
+            }
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            let bass = 0;
+            let avgVolume = 0;
+
+            if(analyser) {
+                analyser.getByteFrequencyData(dataArray);
+                let bSum = 0; for(let i=0; i<10; i++) bSum += dataArray[i];
+                bass = bSum / 10;
+                let total = 0; for(let i=0; i<dataArray.length; i++) total += dataArray[i];
+                avgVolume = total / dataArray.length;
+
+                spectrumGroup.children.forEach((bar, i) => {
+                    const val = dataArray[i];
+                    const scale = 1 + (val / 10); 
+                    bar.scale.set(scale, 1, 1);
+                    const hue = 120 - (val / 255) * 120;
+                    bar.material.color.setHSL(hue / 360, 1, 0.5);
+                });
+            }
+
+            const r = Math.min(1, avgVolume / 150);
+            const g = Math.max(0, 1 - (avgVolume / 200));
+            
+            core.children[0].material.color.setRGB(r, g, 0);
+            core.material.color.setRGB(r, g, 0);
+
+            const heatPercent = Math.min(100, (avgVolume / 200) * 100);
+            document.getElementById('intensity').innerText = Math.floor(heatPercent) + "%";
+            document.getElementById('heat-bar').style.width = heatPercent + "%";
+            if(heatPercent > 65) document.getElementById('heat-bar').style.background = "#ff0000";
+            else document.getElementById('heat-bar').style.background = "#00ff00";
+
+            if (avgVolume > 130 && canLaunch) {
+                launchPenguin();
+                canLaunch = false;
+                setTimeout(() => { canLaunch = true; }, 150); 
+            }
+
+            for (let i = penguinsArray.length - 1; i >= 0; i--) {
+                const p = penguinsArray[i];
+                p.mesh.position.add(p.velocity);
+                p.mesh.material.rotation += 0.01; 
+                if (p.mesh.position.z > 60 || p.mesh.position.length() > 250) {
+                    scene.remove(p.mesh); penguinsArray.splice(i, 1);
+                }
+            }
+            document.getElementById('penguin-count').innerText = penguinsArray.length;
+
+
+            const pulse = Math.pow(bass / 200, 3); 
+            const scaleCore = 1 + pulse;
+            core.scale.set(scaleCore, scaleCore, scaleCore);
+            core.rotation.z += 0.01; core.rotation.y += 0.02;
+
+            const targetFov = baseFov + (bass / 255) * 10;
+            camera.fov += (targetFov - camera.fov) * 0.1;
+            camera.updateProjectionMatrix();
+
+            windowsGroup.forEach(w => {
+                w.position.z += w.userData.speed + (avgVolume / 50);
+                if(w.position.z > 30) w.position.z = -150;
+                const push = Math.pow(bass / 255, 4) * 5; 
+                w.position.x = w.userData.baseX + Math.sign(w.userData.baseX) * push;
+                w.position.y = w.userData.baseY + Math.sign(w.userData.baseY) * push;
+                w.rotation.z += (Math.random()-0.5) * (avgVolume/1000);
+            });
+
+            gridTop.position.z += 0.5 + (avgVolume/100);
+            gridBottom.position.z += 0.5 + (avgVolume/100);
+            if(gridTop.position.z > 20) gridTop.position.z = 0;
+            if(gridBottom.position.z > 20) gridBottom.position.z = 0;
+
+            composer.render();
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            composer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        init();
+    </script>
+</body>
+</html>
