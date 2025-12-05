@@ -211,6 +211,7 @@ class VillageScene extends Phaser.Scene {
             {x: castleGateX, y: castleGateY}, {x: forestEntryX, y: forestEntryY}
         ];
 
+        const clearNorthSide = Math.random() > 0.5;
         // Forêt
         const castleRect = { x: 1, y: 1, w: 7, h: 7 };
         for(let y=0; y<MAP_SIZE; y++) {
@@ -227,14 +228,16 @@ class VillageScene extends Phaser.Scene {
                 // MODIFICATION ICI : Dégager un chemin secret
                 // =========================================================
                 
-                // OPTION 1 : Dégager le coté OUEST (Gauche) le long du mur
-                // Cela garde la colonne 0 vide jusqu'en bas du château
-                if (x === 0 && y <= castleRect.y + castleRect.h) continue;
-
-                /* // OPTION 2 (Alternative) : Dégager le coté NORD (Haut)
-                // Si tu préfères passer par le haut, décommente cette ligne et commente l'option 1 :
-                if (y === 0 && x <= castleRect.x + castleRect.w) continue;
-                */
+                // --- LOGIQUE DU PASSAGE SECRET ALÉATOIRE ---
+                if (clearNorthSide) {
+                    // Si on a choisi le NORD : on vide la ligne du haut (y=0)
+                    // jusqu'à un peu après le château pour que le joueur puisse y entrer
+                    if (y === 0 && x <= castleRect.x + castleRect.w + 1) continue;
+                } else {
+                    // Si on a choisi l'OUEST : on vide la colonne de gauche (x=0)
+                    // jusqu'à un peu sous le château pour que le joueur puisse y entrer
+                    if (x === 0 && y <= castleRect.y + castleRect.h + 1) continue;
+                }
                
                 // =========================================================
 
