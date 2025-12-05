@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TUX vs GOLIATH - Final Boss</title>
+    <link rel="stylesheet" href="boss-style.css">
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div class="scanlines"></div>
+
+    <div id="game-wrapper">
+        
+        <div class="boss-area">
+            <div id="boss-sprite" class="float-anim">
+                <div class="goliath-logo">
+                    <div class="square red"></div>
+                    <div class="square green"></div>
+                    <div class="square blue"></div>
+                    <div class="square yellow"></div>
+                </div>
+                <div class="boss-eyes">
+                    <div class="eye left"></div>
+                    <div class="eye right"></div>
+                </div>
+            </div>
+            
+            <div class="boss-hp-container">
+                <div class="boss-hp-bar">
+                    <div id="boss-hp-fill"></div>
+                </div>
+                <div id="boss-name">GOLIATH OS v11 (PROPRIÉTAIRE)</div>
+            </div>
+        </div>
+
+        <div id="arena">
+            <div id="heart">❤️</div>
+            <div id="bullets-container"></div>
+        </div>
+
+        <div class="ui-area">
+            <div class="player-stats">
+                <span class="name">TUX</span>
+                <span class="lv">LV 20</span>
+                <div class="hp-label">HP</div>
+                <div class="hp-bar-bg">
+                    <div id="player-hp-fill"></div>
+                </div>
+                <span id="hp-text">20 / 20</span>
+            </div>
+
+            <div class="dialogue-box">
+                <span id="dialogue-text">* Goliath OS vous impose une mise à jour forcée !</span>
+            </div>
+
+            <div class="action-buttons" id="main-menu">
+                <div class="btn-wrapper selected" data-idx="0">
+                    <button class="act-btn">⚔️ FIGHT</button>
+                </div>
+                <div class="btn-wrapper" data-idx="1">
+                    <button class="act-btn">🗣️ ACT</button>
+                </div>
+                <div class="btn-wrapper" data-idx="2">
+                    <button class="act-btn">🎒 ITEM</button>
+                </div>
+                <div class="btn-wrapper" data-idx="3">
+                    <button class="act-btn">❌ MERCY</button>
+                </div>
+            </div>
+            
+            <div class="sub-menu hidden" id="act-menu">
+                <div class="sub-option selected" data-act="CHECK">* ANALYSER</div>
+                <div class="sub-option" data-act="INSTALL_LINUX">* INSTALLER LINUX</div>
+                <div class="sub-option" data-act="DEBLOAT">* DÉBLOATAGE</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="overlay-screen" class="hidden">
+        <h1 id="end-title">GAME OVER</h1>
+        <p id="end-desc">Votre licence a expiré...</p>
+        <button onclick="location.reload()" class="retry-btn">REBOOT SYSTEM</button>
+    </div>
+
+    <script src="boss-script.js"></script>
+</body>
+</html>

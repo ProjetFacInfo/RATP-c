@@ -1,0 +1,153 @@
+:root {
+    --bg-color: #000;
+    --border-color: #fff;
+    --heart-color: #ff0000;
+    --arena-width: 400px;  /* AGRANDI */
+    --arena-height: 250px; /* AGRANDI */
+    --ui-orange: #ff9900;
+    --ui-yellow: #ffff00;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: white;
+    font-family: 'VT323', monospace;
+    margin: 0;
+    display: flex; justify-content: center; align-items: center;
+    height: 100vh; overflow: hidden;
+    user-select: none;
+}
+
+/* Effet Scanlines (Rétro) */
+.scanlines {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.2));
+    background-size: 100% 4px;
+    pointer-events: none; z-index: 999;
+}
+
+#game-wrapper {
+    width: 640px; display: flex; flex-direction: column; align-items: center;
+}
+
+/* --- BOSS LOGO (Style Goliath/Windows) --- */
+.boss-area { margin-bottom: 10px; text-align: center; }
+
+#boss-sprite {
+    width: 120px; height: 120px;
+    margin: 0 auto; position: relative;
+    /* Animation de flottement menaçant */
+    animation: float 3s ease-in-out infinite;
+}
+
+/* La grille de 4 carrés */
+.goliath-logo {
+    width: 100%; height: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 5px;
+    transform: perspective(300px) rotateY(10deg); /* Effet 3D léger */
+}
+
+.square { width: 100%; height: 100%; opacity: 0.9; box-shadow: 0 0 10px currentColor; }
+.red { background-color: #f25022; color: #f25022; }
+.green { background-color: #7fba00; color: #7fba00; }
+.blue { background-color: #00a4ef; color: #00a4ef; }
+.yellow { background-color: #ffb900; color: #ffb900; }
+
+/* Yeux menaçants par dessus */
+.boss-eyes {
+    position: absolute; top: 30%; left: 0; width: 100%;
+    display: flex; justify-content: center; gap: 20px;
+}
+.eye {
+    width: 15px; height: 5px; background: black;
+    box-shadow: 0 0 5px white;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+.boss-hp-container { width: 400px; margin: 10px auto; }
+.boss-hp-bar { width: 100%; height: 15px; background: #333; border: 2px solid white; }
+#boss-hp-fill { width: 100%; height: 100%; background: #0f0; transition: width 0.5s; }
+#boss-name { font-size: 20px; margin-top: 5px; letter-spacing: 2px; }
+
+/* --- ARENA (AGRANDIE) --- */
+#arena {
+    width: var(--arena-width);
+    height: var(--arena-height);
+    border: 5px solid var(--border-color);
+    position: relative; overflow: hidden;
+    background: black;
+    box-shadow: 0 0 20px rgba(255,255,255,0.2);
+}
+
+#heart {
+    position: absolute; font-size: 20px; color: var(--heart-color);
+    top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 10;
+}
+.hurt { animation: blink 0.1s infinite; }
+
+/* Projectiles */
+.bullet { position: absolute; font-size: 20px; font-weight: bold; color: white; }
+
+/* --- UI & BOUTONS --- */
+.ui-area { width: 100%; padding: 10px; box-sizing: border-box; }
+
+.player-stats {
+    display: flex; align-items: center; gap: 15px; font-size: 24px; margin-bottom: 10px;
+}
+.hp-label { font-size: 18px; font-weight: bold; }
+.hp-bar-bg { width: 100px; height: 20px; background: #ff0000; }
+#player-hp-fill { width: 100%; height: 100%; background: #ffff00; }
+
+.dialogue-box {
+    width: 100%; height: 90px;
+    border: 4px solid white; padding: 15px;
+    font-size: 26px; margin-bottom: 15px;
+    background: black;
+}
+
+.action-buttons {
+    display: flex; justify-content: space-between; width: 100%;
+}
+
+/* Style des boutons et de la sélection */
+.btn-wrapper {
+    width: 23%; position: relative;
+}
+.act-btn {
+    width: 100%; background: black; color: var(--ui-orange);
+    border: 2px solid var(--ui-orange);
+    padding: 10px 0; font-family: inherit; font-size: 24px;
+    cursor: pointer;
+}
+
+/* État sélectionné (via clavier) */
+.btn-wrapper.selected .act-btn {
+    background: var(--ui-yellow); color: black; border-color: var(--ui-yellow);
+}
+/* Le petit coeur de sélection */
+.btn-wrapper.selected::before {
+    content: '❤️'; position: absolute; left: 5px; top: 12px;
+    font-size: 16px; color: red;
+}
+
+/* SOUS-MENU */
+.sub-menu {
+    position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
+    width: var(--arena-width); height: 150px;
+    background: black; border: 4px solid white; padding: 20px;
+    display: flex; flex-direction: column; gap: 10px; z-index: 20;
+}
+.sub-option { font-size: 24px; cursor: pointer; color: white; padding-left: 20px; }
+.sub-option.selected { color: yellow; position: relative; }
+.sub-option.selected::before { content: '❤️'; position: absolute; left: 0; font-size: 16px; color: red; }
+
+.hidden { display: none !important; }
+
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
