@@ -19,6 +19,17 @@ const T_SPAWN = 9;       // Point de départ
 const SAVED_DATA = localStorage.getItem('nird_rpg_save');
 let startPlayerPos = null; // Variable temporaire pour la position
 
+// --- ÉTAT GLOBAL (Persistance) ---
+window.GAME_STATE = {
+    mapMatrix: null,
+    items: {
+        key: false,     // Clé du labyrinthe
+        patch: false,   // Clé USB (Puzzle)
+        csCut: false    // CS-Coupe (Secret)
+    },
+    windosAlive: true   // Ennemi
+};
+
 // 1. On vérifie si le joueur revient victorieux du laser game
 if (localStorage.getItem('has_won_laser_game') === 'true') {
 
