@@ -309,3 +309,38 @@ function createCrack() {
     // Optionnel : ajouter un bruit de verre brisé ici si tu as un fichier son
     // let audio = new Audio('glass_break.mp3'); audio.play();
 }
+
+/* --- FONCTION DE TRICHE (DÉMO) --- */
+function instantWin() {
+    // On force les stats au max
+    gameState.independence = 100;
+    gameState.budget += 100000; // Un petit bonus d'argent pour la forme
+
+    // On met à jour l'affichage
+    updateUI();
+    
+    // On met à jour le visuel (pour voir l'écran Linux apparaître)
+    if (typeof updateVisuals === 'function') {
+        updateVisuals(); 
+    } else if (typeof checkVisualChanges === 'function') {
+        checkVisualChanges();
+    }
+
+    // On déclenche la victoire
+    // Si tu as utilisé ma fonction victory() précédente :
+    if (typeof victory === 'function') {
+        victory();
+    } else {
+        // Sinon on force l'affichage de la modale manuellement
+        document.getElementById('win-modal').classList.remove('hidden');
+    }
+    
+    // Petit log pour confirmer
+    const list = document.getElementById('game-log');
+    if(list) {
+        const li = document.createElement('li');
+        li.innerText = "> CHEAT ACTIVÉ : VICTOIRE !";
+        li.style.color = "gold";
+        list.prepend(li);
+    }
+}
