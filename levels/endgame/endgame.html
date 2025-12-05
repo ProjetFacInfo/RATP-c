@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VICTOIRE - Village Numérique Résistant</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;800&family=VT323&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="endgame.css">
+</head>
+<body>
+
+    <canvas id="confetti-canvas"></canvas>
+
+    <div class="container">
+        <h1>MISSION ACCOMPLIE !</h1>
+        <p class="subtitle">Le Village est libre et autonome.</p>
+
+        <div class="story-text">
+            <p>
+                <strong>Bravo !</strong> Grâce à vos actions, l'établissement scolaire a brisé ses chaînes. 
+                Goliath OS a été remplacé par des solutions ouvertes, le matériel a été reconditionné, 
+                et les données des élèves sont enfin en sécurité en Europe.
+            </p>
+            <p>
+                Vous avez prouvé qu'un numérique <strong>Inclusif, Responsable et Durable (NIRD)</strong> est possible.
+                L'aventure ne fait que commencer : c'est maintenant à la communauté de faire vivre ce village !
+            </p>
+        </div>
+
+        <div class="resources-title">📚 LA BOÎTE À OUTILS DU RÉSISTANT</div>
+        
+        <div class="resource-grid">
+            <a href="https://nird.forge.apps.education.fr/" target="_blank" class="card">
+                <span class="card-icon">🐧</span>
+                <span class="card-title">Le Projet NIRD</span>
+                <span class="card-desc">Découvrez la démarche officielle et le manifeste.</span>
+            </a>
+            <a href="https://apps.education.fr/" target="_blank" class="card">
+                <span class="card-icon">🛠️</span>
+                <span class="card-title">Apps.education</span>
+                <span class="card-desc">La plateforme d'outils libres pour les profs.</span>
+            </a>
+            <a href="https://forge.apps.education.fr/" target="_blank" class="card">
+                <span class="card-icon">⚔️</span>
+                <span class="card-title">La Forge</span>
+                <span class="card-desc">Construisons ensemble les communs numériques.</span>
+            </a>
+        </div>
+
+        <button class="btn-restart" id="restart-btn">🔄 REBOOTER L'AVENTURE</button>
+
+        <div class="credits">
+            Développé pour la Nuit de l'Info 2025<br>
+            Merci à toute l'équipe NIRD.
+        </div>
+    </div>
+
+    <script src="endgame.js"></script>
+</body>
+</html>
