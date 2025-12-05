@@ -4,21 +4,20 @@ const TILE_HEIGHT = 32;
 const MAP_SIZE = 25;
 
 // --- CODES DE LA MATRICE (Légende) ---
-const T_GRASS = 0;       // Herbe simple
-const T_PATH = 1;        // Chemin (Jaune)
-const T_TREE = 2;        // Arbre
-const T_KEY = 3;         // Clé (Labyrinthe)
-const T_PORTAL_PUZZLE = 4; // Portail vers le Puzzle
-const T_PORTAL_FINAL = 5;  // Portail de fin (Dans le Château)
-const T_PORTAL_HIDDEN = 6; // Portail Secret (CS-Coupe)
-const T_PORTAL_ANCIENT = 7; // 4ème Portail (Décoratif/Lore)
-const T_SPAWN = 9;       // Point de départ
+const T_GRASS = 0;       
+const T_PATH = 1;        
+const T_TREE = 2;        
+const T_KEY = 3;         
+const T_PORTAL_PUZZLE = 4; 
+const T_PORTAL_FINAL = 5;  
+const T_PORTAL_HIDDEN = 6; 
+const T_PORTAL_ANCIENT = 7; 
+const T_PORTAL_JS = 8;      // <--- NOUVEAU : Portail JS
+const T_SPAWN = 9;       
 
-// --- ÉTAT GLOBAL (Persistance) ---
 // --- ÉTAT GLOBAL (Persistance & Chargement) ---
 const SAVED_DATA = localStorage.getItem('nird_rpg_save');
-let startPlayerPos = null; // Variable temporaire pour la position
-
+let startPlayerPos = null;
 
 if (SAVED_DATA) {
     console.log("Sauvegarde chargée !");
@@ -26,28 +25,22 @@ if (SAVED_DATA) {
     window.GAME_STATE = parsed.gameState;
     startPlayerPos = parsed.playerPos;
 } else {
-    // État par défaut si aucune sauvegarde
     window.GAME_STATE = {
         mapMatrix: null,
         items: {
-            key: false,     // Clé du labyrinthe
-            patch: false,   // Clé USB (Puzzle)
-            csCut: false    // CS-Coupe (Secret)
+            key: false,     
+            patch: false,   
+            csCut: false    
         },
-        windosAlive: true   // Ennemi
+        windosAlive: true   
     };
 }
 
-// 1. On vérifie si le joueur revient victorieux du laser game
+// Vérification retour Laser Game
 if (localStorage.getItem('has_won_laser_game') === 'true') {
-
-    
-    // 2. On donne l'item
     window.GAME_STATE.items.patch = true;
     window.GAME_STATE.items.key = true;
-    // 3. IMPORTANT : On supprime immédiatement l'info de la mémoire
-    // Pour que si on reload la page (F5), on recommence sans l'item
-    //localStorage.removeItem('has_won_laser_game');
+    // localStorage.removeItem('has_won_laser_game'); // Optionnel : nettoyer
 }
 
 function isoToScreen(x, y) {
@@ -57,7 +50,7 @@ function isoToScreen(x, y) {
 }
 
 // =========================================================
-// SCÈNE 1 : LE VILLAGE
+// SCÈNE 1 : LE VILLAGE (ISOMÉTRIQUE)
 // =========================================================
 class VillageScene extends Phaser.Scene {
     constructor() { super({ key: 'VillageScene' }); }
@@ -96,7 +89,7 @@ class VillageScene extends Phaser.Scene {
         g.clear(); g.fillStyle(0x0277bd); g.fillRect(0,0,32,32); g.lineStyle(2, 0xffffff); g.strokeRect(0,0,32,32);
         g.generateTexture('windos', 32, 32);
 
-        // 8. Portail Puzzle (Cyan)
+        // 8. Portail Puzzle (Cyan Clair)
         g.clear(); g.lineStyle(2, 0xffffff, 0.5); g.fillStyle(0x00e5ff, 0.7); g.fillEllipse(32, 40, 40, 60); g.strokeEllipse(32, 40, 40, 60);
         g.fillStyle(0x00acc1); g.fillEllipse(32, 65, 30, 15); g.generateTexture('portal_tex', 64, 80);
 
@@ -108,11 +101,15 @@ class VillageScene extends Phaser.Scene {
         g.clear(); g.lineStyle(2, 0xffffff, 0.5); g.fillStyle(0x9c27b0, 0.7); g.fillEllipse(32, 40, 40, 60); g.strokeEllipse(32, 40, 40, 60);
         g.fillStyle(0x7b1fa2); g.fillEllipse(32, 65, 30, 15); g.generateTexture('portal_hidden_tex', 64, 80);
 
-        // 11. Portail Ancien (Gris/Rouge - Décoratif)
+        // 11. Portail Ancien (Gris)
         g.clear(); g.lineStyle(2, 0xaaaaaa, 0.5); g.fillStyle(0x555555, 0.7); g.fillEllipse(32, 40, 40, 60); g.strokeEllipse(32, 40, 40, 60);
         g.fillStyle(0x333333); g.fillEllipse(32, 65, 30, 15); g.generateTexture('portal_ancient_tex', 64, 80);
 
-        // 12. Clé
+        // 12. NOUVEAU : Portail JS (Cyan Foncé / Teal)
+        g.clear(); g.lineStyle(2, 0x00ffff, 0.8); g.fillStyle(0x0088aa, 0.7); g.fillEllipse(32, 40, 40, 60); g.strokeEllipse(32, 40, 40, 60);
+        g.fillStyle(0x005577); g.fillEllipse(32, 65, 30, 15); g.generateTexture('portal_js_tex', 64, 80);
+
+        // 13. Clé
         g.clear(); g.lineStyle(2, 0xffd700); g.strokeCircle(16, 10, 6); g.beginPath(); g.moveTo(16, 16); g.lineTo(16, 28); g.strokePath();
         g.generateTexture('item_key', 32, 32);
     }
@@ -131,23 +128,19 @@ class VillageScene extends Phaser.Scene {
 
         this.renderMap();
 
-        // Spawn Logic (MODIFIÉ)
+        // Spawn Logic
         if (startPlayerPos) {
-            // 1. Priorité : Reprendre là où on a sauvegardé
             this.playerIso = startPlayerPos;
-            startPlayerPos = null; // On vide pour ne pas interférer avec les futurs respawns
+            startPlayerPos = null;
         }
         else if (window.GAME_STATE.items.patch && !this.playerIso) {
-            // 2. Retour du Puzzle
-            this.playerIso = { x: 22, y: 3 };
+            this.playerIso = { x: 22, y: 3 }; // Retour Puzzle
         }
         else if (!this.playerIso) {
-            // 3. Nouvelle partie
-            this.playerIso = { x: 2, y: 22 };
+            this.playerIso = { x: 2, y: 22 }; // Spawn normal
         }
 
         const pPos = isoToScreen(this.playerIso.x, this.playerIso.y);
-        // ... (reste du code inchangé) ...
         this.player = this.add.image(this.centerX + pPos.x, this.centerY + pPos.y, 'tux');
         this.player.setOrigin(0.5, 0.85);
         this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
@@ -163,14 +156,11 @@ class VillageScene extends Phaser.Scene {
     }
 
     generateNewMap() {
-        // 1. Initialisation
         const matrix = Array(MAP_SIZE).fill().map(() => Array(MAP_SIZE).fill(T_GRASS));
         const setM = (x, y, val) => { if(x>=0 && x<MAP_SIZE && y>=0 && y<MAP_SIZE) matrix[y][x] = val; };
 
-        // Zone Château (Exclusion)
         const castleRect = { x: 1, y: 1, w: 7, h: 7 };
 
-        // Helper: Dessine chemin Jaune
         const drawJaggedPath = (x1, y1, x2, y2) => {
             let cx = x1, cy = y1;
             setM(cx, cy, T_PATH);
@@ -187,7 +177,7 @@ class VillageScene extends Phaser.Scene {
             }
         };
 
-const spawnX=2, spawnY=22;
+        const spawnX=2, spawnY=22;
         const castleGateX=4, castleGateY=6;
         const forestEntryX=18, forestEntryY=18;
 
@@ -196,25 +186,32 @@ const spawnX=2, spawnY=22;
         const portalHiddenX=0, portalHiddenY=0;
         const portalAncientX=20, portalAncientY=22;
         const keyX=20, keyY=20;
+        
+        // --- NOUVEAU PORTAIL JS ---
+        const portalJsX=3, portalJsY=24; 
 
-        // 1. D'ABORD : Le Spawn (Peut être écrasé par le début du chemin, on le remettra si besoin, mais le spawn est spécial)
+        // 1. Spawn
         setM(spawnX, spawnY, T_SPAWN);
 
-        // 2. ENSUITE : Les Chemins (Ils vont écrire des T_PATH partout sur leur passage)
+        // 2. Chemins
         drawJaggedPath(spawnX, spawnY, castleGateX, castleGateY);
         drawJaggedPath(castleGateX, castleGateY, 12, 12);
         drawJaggedPath(12, 12, forestEntryX, forestEntryY);
         drawJaggedPath(forestEntryX, forestEntryY, portalPuzzleX, portalPuzzleY);
         drawJaggedPath(12, 12, portalAncientX, portalAncientY);
+        
+        // Chemin vers le nouveau portail
+        drawJaggedPath(spawnX, spawnY, portalJsX, portalJsY);
 
-        // 3. ENFIN : On place les Portails et la Clé (Pour écraser le chemin à l'arrivée)
+        // 3. Objets
         setM(portalFinalX, portalFinalY, T_PORTAL_FINAL);
-        setM(portalPuzzleX, portalPuzzleY, T_PORTAL_PUZZLE); // <- Maintenant il écrase le chemin
+        setM(portalPuzzleX, portalPuzzleY, T_PORTAL_PUZZLE); 
         setM(portalHiddenX, portalHiddenY, T_PORTAL_HIDDEN);
-        setM(portalAncientX, portalAncientY, T_PORTAL_ANCIENT); // <- Idem
+        setM(portalAncientX, portalAncientY, T_PORTAL_ANCIENT);
+        setM(portalJsX, portalJsY, T_PORTAL_JS); // <--- Placement
         setM(keyX, keyY, T_KEY);
 
-        // --- LISTE DES POINTS PROTÉGÉS ---
+        // Points Protégés
         const protectedPoints = [
             {x: spawnX, y: spawnY},
             {x: keyX, y: keyY}, {x: keyX-1, y: keyY-1},
@@ -222,58 +219,41 @@ const spawnX=2, spawnY=22;
             {x: portalPuzzleX, y: portalPuzzleY},
             {x: portalHiddenX, y: portalHiddenY},
             {x: portalAncientX, y: portalAncientY},
+            {x: portalJsX, y: portalJsY}, // <--- Protection
             {x: castleGateX, y: castleGateY},
             {x: forestEntryX, y: forestEntryY}
         ];
 
-        // --- GÉNÉRATION DES ARBRES ---
+        // Arbres
         for(let y=0; y<MAP_SIZE; y++) {
             for(let x=0; x<MAP_SIZE; x++) {
-                // Si la case n'est pas de l'herbe (C'est un chemin, un portail ou le spawn), on ne touche pas
                 if(matrix[y][x] !== T_GRASS) continue;
-
-                // Exclusion Château
                 if (x >= castleRect.x && x < castleRect.x + castleRect.w &&
-                    y >= castleRect.y && y < castleRect.y + castleRect.h) {
-                    continue;
-                }
-
-                // Points Protégés (Sécurité supplémentaire)
+                    y >= castleRect.y && y < castleRect.y + castleRect.h) continue;
+                
                 const isProtected = protectedPoints.some(p => p.x === x && p.y === y);
                 if (isProtected) continue;
 
-                // Hasard
-                if(Phaser.Math.Between(0,100) < 20) {
-                    matrix[y][x] = T_TREE;
-                }
+                if(Phaser.Math.Between(0,100) < 20) matrix[y][x] = T_TREE;
             }
         }
-        // --- FONCTION DE GARANTIE D'ACCÈS (LE BULLDOZER) ---
-        // Cette fonction s'assure qu'aucun arbre ne bloque le chemin direct vers un objectif
-        const ensureAccessibility = (targetX, targetY) => {
-            // On part du spawn ou d'un point central
-            let cx = 12; // Point central de la map
-            let cy = 12;
 
-            // On marche vers la cible
+        // Bulldozer (Garantie d'accès)
+        const ensureAccessibility = (targetX, targetY) => {
+            let cx = 12; let cy = 12;
             while(cx !== targetX || cy !== targetY) {
-                // Déplacement simple
                 if(cx < targetX) cx++; else if(cx > targetX) cx--;
                 if(cy < targetY) cy++; else if(cy > targetY) cy--;
-
-                // Si on tombe sur un arbre ou un mur (sauf château), on nettoie
-                if(matrix[cy][cx] === T_TREE) {
-                    matrix[cy][cx] = T_GRASS; // COUPE L'ARBRE AUTOMATIQUEMENT
-                }
+                if(matrix[cy][cx] === T_TREE) matrix[cy][cx] = T_GRASS;
             }
         };
 
-        // --- VÉRIFICATION DES 5 OBJECTIFS MAJEURS ---
-        ensureAccessibility(keyX, keyY);             // Accès Clé
-        ensureAccessibility(portalPuzzleX, portalPuzzleY); // Accès Portail Puzzle
-        ensureAccessibility(portalAncientX, portalAncientY); // Accès Portail Ancien
-        // Pour le portail secret, on doit faire un chemin spécial qui contourne le château
-        // On force un chemin d'herbe sur le bord haut de la map
+        ensureAccessibility(keyX, keyY);             
+        ensureAccessibility(portalPuzzleX, portalPuzzleY); 
+        ensureAccessibility(portalAncientX, portalAncientY);
+        ensureAccessibility(portalJsX, portalJsY); // <--- Accès garanti
+
+        // Chemin secret
         for(let x=0; x<10; x++) { if(matrix[0][x] === T_TREE) matrix[0][x] = T_GRASS; }
         for(let y=0; y<5; y++) { if(matrix[y][0] === T_TREE) matrix[y][0] = T_GRASS; }
 
@@ -289,11 +269,9 @@ const spawnX=2, spawnY=22;
             for (let x = 0; x < MAP_SIZE; x++) {
                 let val = this.mapMatrix[y][x];
 
-                // Gestion état des objets
                 if (val === T_KEY && window.GAME_STATE.items.key) val = T_GRASS;
                 if (val === T_PORTAL_HIDDEN && window.GAME_STATE.items.csCut) val = T_GRASS;
 
-                // Textures Sol
                 let tex = 'grass';
                 if (val === T_PATH || val === T_SPAWN) tex = 'path';
 
@@ -309,10 +287,14 @@ const spawnX=2, spawnY=22;
                 else if (val === T_PORTAL_FINAL) this.addObj(x, y, 'portal_final_tex', true, 'portal_final', false);
                 else if (val === T_PORTAL_ANCIENT) {
                     let p = this.addObj(x, y, 'portal_ancient_tex', true, 'portal_ancient', false);
-                    p.sprite.setTint(0x888888); // Grisâtre
+                    p.sprite.setTint(0x888888); 
                 }
                 else if (val === T_PORTAL_HIDDEN && !window.GAME_STATE.items.csCut) {
                     this.addObj(x, y, 'portal_hidden_tex', true, 'portal_hidden', false);
+                }
+                // --- Rendu Nouveau Portail ---
+                else if (val === T_PORTAL_JS) {
+                    this.addObj(x, y, 'portal_js_tex', true, 'portal_js', false);
                 }
             }
         }
@@ -404,15 +386,14 @@ const spawnX=2, spawnY=22;
         }
     }
 
-	// fonction pour sauvegarder tout le jeu
     saveProgress() {
         const data = {
             gameState: window.GAME_STATE,
             playerPos: this.playerIso
         };
-        localStorage.removeItem('nird_rpg_save'); // Suppression de la sauvegarde
+        localStorage.removeItem('nird_rpg_save');
         localStorage.setItem('nird_rpg_save', JSON.stringify(data));
-        console.log("Progression sauvegardée dans le LocalStorage.");
+        console.log("Progression sauvegardée.");
     }
     
     updateInventoryUI() {
@@ -451,20 +432,12 @@ const spawnX=2, spawnY=22;
             // PORTAIL SECRET
             if (obs.type === 'portal_hidden') {
                 this.showUI("Vous trouvez la CS-Coupe ! Sauvegarde effectuée.");
-
-                // 1. Mettre à jour l'inventaire
                 window.GAME_STATE.items.csCut = true;
                 this.updateInventoryUI();
-
-                // 2. SAUVEGARDER LE JEU MAINTENANT
                 this.saveProgress();
-
-                // 3. Nettoyer l'objet sur la carte
                 obs.sprite.destroy();
                 this.obstacles.splice(this.obstacles.indexOf(obs), 1);
-
                 setTimeout(() => window.location.href = "../snake/snake.html", 1000);
-
                 return false;
             }
             // ENNEMI
@@ -493,13 +466,23 @@ const spawnX=2, spawnY=22;
             }
             if (obs.type === 'portal_final') {                    
                 this.showUI("Lancement de la carte finale...");
-                localStorage.removeItem('nird_rpg_save'); // Suppression de la sauvegarde
-                localStorage.removeItem('has_won_laser_game'); // Suppression de l'info Laser Game
+                localStorage.removeItem('nird_rpg_save'); 
+                localStorage.removeItem('has_won_laser_game');
                 this.time.delayedCall(500, () => window.location.href = "../end/end.html");
                 return false;
             }
             if (obs.type === 'portal_ancient') {
                 this.showUI("Un portail obsolète. Il ne fonctionne plus.");
+                return false;
+            }
+            
+            // --- NOUVEAU PORTAIL VISUALISATION ---
+            if (obs.type === 'portal_js') {
+                this.showUI("Lancement de la Visualisation Audio...");
+                // Sauvegarde 'medium' comme demandé
+                localStorage.setItem("previous_map", "medium");
+                
+                this.time.delayedCall(500, () => window.location.href = "../visualisation-audio/visual-audio.html");
                 return false;
             }
 
@@ -520,88 +503,8 @@ const spawnX=2, spawnY=22;
 }
 
 // =========================================================
-// SCÈNE 2 : PUZZLE
+// INIT
 // =========================================================
-class PuzzleScene extends Phaser.Scene {
-    constructor() { super({ key: 'PuzzleScene' }); }
-
-    create() {
-        this.cameras.main.setBackgroundColor('#2c3e50');
-        this.add.text(this.scale.width/2, 50, "Parcours le chemin sans revenir sur tes pas !", {
-            font: "20px monospace", fill: "#0f0"
-        }).setOrigin(0.5);
-
-        this.gridSize = 8;
-        this.tileSize = 50;
-        this.startX = (this.scale.width - (this.gridSize * this.tileSize)) / 2;
-        this.startY = 150;
-
-        this.tiles = [];
-        this.playerPos = { x: 0, y: 0 };
-        this.activeTiles = 0;
-
-        const g = this.make.graphics();
-        g.fillStyle(0x000000, 0.5); g.fillRect(0,0,48,48); g.lineStyle(2, 0x00ff00); g.strokeRect(0,0,48,48);
-        g.generateTexture('tile_empty', 50, 50);
-        g.clear(); g.fillStyle(0x00ff00, 0.6); g.fillRect(0,0,48,48);
-        g.generateTexture('tile_active', 50, 50);
-
-        for(let y=0; y<this.gridSize; y++) {
-            let row = [];
-            for(let x=0; x<this.gridSize; x++) {
-                let t = this.add.image(this.startX + x*50, this.startY + y*50, 'tile_empty').setOrigin(0);
-                row.push({ spr: t, active: false });
-            }
-            this.tiles.push(row);
-        }
-
-        this.player = this.add.image(this.startX + 25, this.startY + 25, 'tux');
-        this.activateTile(0, 0);
-
-        this.cursors = this.input.keyboard.createCursorKeys();
-        this.input.keyboard.on('keydown', this.handleInput, this);
-    }
-
-    handleInput(event) {
-        let dx = 0; let dy = 0;
-        if(event.key === "ArrowUp") dy = -1;
-        else if(event.key === "ArrowDown") dy = 1;
-        else if(event.key === "ArrowLeft") dx = -1;
-        else if(event.key === "ArrowRight") dx = 1;
-
-        if(dx !== 0 || dy !== 0) {
-            let nx = this.playerPos.x + dx;
-            let ny = this.playerPos.y + dy;
-
-            if(nx >= 0 && nx < this.gridSize && ny >= 0 && ny < this.gridSize) {
-                this.playerPos = { x: nx, y: ny };
-                this.player.x = this.startX + nx*50 + 25;
-                this.player.y = this.startY + ny*50 + 25;
-
-                let tile = this.tiles[ny][nx];
-                if(tile.active) {
-                    this.cameras.main.shake(200);
-                    alert("Circuit brisé !");
-                    this.scene.start('VillageScene');
-                } else {
-                    this.activateTile(nx, ny);
-                    if(this.activeTiles === this.gridSize * this.gridSize) {
-                        alert("Victoire !");
-                        window.GAME_STATE.items.patch = true;
-                        this.scene.start('VillageScene');
-                    }
-                }
-            }
-        }
-    }
-
-    activateTile(x, y) {
-        this.tiles[y][x].active = true;
-        this.tiles[y][x].spr.setTexture('tile_active');
-        this.activeTiles++;
-    }
-}
-
 const config = {
     type: Phaser.AUTO,
     width: window.innerWidth,
@@ -609,7 +512,7 @@ const config = {
     parent: 'game-container',
     pixelArt: true,
     backgroundColor: '#000000',
-    scene: [ VillageScene, PuzzleScene ],
+    scene: [ VillageScene ],
     scale: { mode: Phaser.Scale.RESIZE, autoCenter: Phaser.Scale.CENTER_BOTH }
 };
 

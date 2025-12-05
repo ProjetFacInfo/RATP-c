@@ -1,17 +1,20 @@
-// --- CONFIGURATION 2D (TOP-DOWN) ---
+// =========================================================
+// CONFIGURATION & CONSTANTES
+// =========================================================
 const TILE_SIZE = 32;
 const MAP_SIZE = 25;
 
-// --- CODES DE LA MATRICE (Légende) ---
+// --- CODES DE LA MATRICE ---
 const T_GRASS = 0;       
 const T_PATH = 1;        
 const T_TREE = 2;        
 const T_PORTAL_FINAL = 5;  
 const T_PORTAL_HIDDEN = 6; 
-const T_PORTAL_ANCIENT = 7; // Portail Actif (Tycoon)
+const T_PORTAL_ANCIENT = 7; // Portail vers Tycoon
+const T_PORTAL_JS = 8;      // Portail vers Visualisation Audio
 const T_SPAWN = 9;       
 
-// --- ÉTAT GLOBAL (Persistance) ---
+// --- ÉTAT GLOBAL ---
 window.GAME_STATE = window.GAME_STATE || {
     mapMatrix: null,
     items: {
@@ -20,7 +23,7 @@ window.GAME_STATE = window.GAME_STATE || {
     windosAlive: true   
 };
 
-// Fonction : Convertit Grille -> Écran 2D (Centre de la tuile)
+// Fonction utilitaire : Grille -> Pixels
 function gridToScreen(x, y) {
     return { 
         x: x * TILE_SIZE + (TILE_SIZE / 2), 
@@ -29,7 +32,7 @@ function gridToScreen(x, y) {
 }
 
 // =========================================================
-// SCÈNE 1 : LE VILLAGE (VUE DE DESSUS)
+// SCÈNE PRINCIPALE
 // =========================================================
 class VillageScene extends Phaser.Scene {
     constructor() { super({ key: 'VillageScene' }); }
@@ -37,75 +40,71 @@ class VillageScene extends Phaser.Scene {
     preload() {
         const g = this.make.graphics({ add: false });
         
-        // 1. Herbe (Carré vert)
+        // 1. Herbe
         g.fillStyle(0x4caf50); g.fillRect(0, 0, 32, 32);
         g.lineStyle(1, 0x388e3c); g.strokeRect(0, 0, 32, 32);
         g.generateTexture('grass', 32, 32);
 
-        // 2. Chemin (Carré jaune)
+        // 2. Chemin
         g.clear(); g.fillStyle(0xffca28); g.fillRect(0, 0, 32, 32);
         g.lineStyle(1, 0xc49000); g.strokeRect(0, 0, 32, 32);
         g.generateTexture('path', 32, 32);
 
-        // 3. Spawn (Carré Rouge)
+        // 3. Spawn
         g.clear(); g.fillStyle(0xd32f2f); g.fillRect(0, 0, 32, 32);
         g.lineStyle(2, 0xffffff); g.strokeRect(4,4,24,24);
         g.generateTexture('spawn_point', 32, 32);
 
-        // 4. Mur Château (Carré Gris)
+        // 4. Mur Château
         g.clear(); g.fillStyle(0x757575); g.fillRect(0, 0, 32, 32);
         g.lineStyle(2, 0x424242); g.strokeRect(0, 0, 32, 32);
-        g.fillStyle(0x555555); g.fillRect(8, 8, 16, 16); // Relief
+        g.fillStyle(0x555555); g.fillRect(8, 8, 16, 16);
         g.generateTexture('wall_castle', 32, 32);
 
-        // 5. Arbre (Rond vert)
+        // 5. Arbre
         g.clear(); g.fillStyle(0x2e7d32); g.fillCircle(16, 16, 14); 
-        g.fillStyle(0x1b5e20); g.fillCircle(16, 16, 4); // Centre
+        g.fillStyle(0x1b5e20); g.fillCircle(16, 16, 4);
         g.generateTexture('tree', 32, 32);
 
-        // 6. Tux (Rond noir/blanc)
+        // 6. Tux
         g.clear(); g.fillStyle(0x111111); g.fillCircle(16, 16, 14); 
         g.fillStyle(0xffffff); g.fillCircle(16, 12, 10); 
         g.fillStyle(0xff9800); g.fillTriangle(12, 8, 20, 8, 16, 16); 
         g.generateTexture('tux', 32, 32);
 
-        // 7. Ennemi WindOS (Carré Bleu)
+        // 7. Ennemi WindOS
         g.clear(); g.fillStyle(0x0277bd); g.fillRect(2, 2, 28, 28);
         g.lineStyle(2, 0xffffff); g.strokeRect(2, 2, 28, 28);
         g.generateTexture('windos', 32, 32);
 
-        // 8. Portail Final (Or - Rond)
+        // 8. Portail Final (Or)
         g.clear(); g.lineStyle(2, 0xffd700); g.strokeCircle(16, 16, 14);
         g.fillStyle(0xc6a700, 0.7); g.fillCircle(16, 16, 10);
         g.generateTexture('portal_final_tex', 32, 32);
         
-        // 9. Portail Secret (Violet - Rond)
+        // 9. Portail Secret (Violet)
         g.clear(); g.lineStyle(2, 0x9c27b0); g.strokeCircle(16, 16, 14);
         g.fillStyle(0x7b1fa2, 0.7); g.fillCircle(16, 16, 10);
         g.generateTexture('portal_hidden_tex', 32, 32);
 
-        // 10. Portail Ancien (Rouge - Rond)
+        // 10. Portail Ancien (Rouge)
         g.clear(); g.lineStyle(2, 0xff5555); g.strokeCircle(16, 16, 14);
         g.fillStyle(0xaa2222, 0.7); g.fillCircle(16, 16, 10);
         g.generateTexture('portal_ancient_tex', 32, 32);
 
-        // 11. Clé
-        g.clear(); g.lineStyle(2, 0xffd700); g.strokeCircle(16, 16, 10); 
-        g.lineStyle(2, 0xffd700); g.beginPath(); g.moveTo(16, 20); g.lineTo(22, 26); g.strokePath();
-        g.generateTexture('item_key', 32, 32);
+        // 11. Portail JS (Cyan)
+        g.clear(); g.lineStyle(2, 0x00ffff); g.strokeCircle(16, 16, 14);
+        g.fillStyle(0x0088aa, 0.7); g.fillCircle(16, 16, 10);
+        g.generateTexture('portal_js_tex', 32, 32);
     }
 
     create() {
-        this.cameras.main.setBackgroundColor('#222'); // Fond gris foncé
-
+        this.cameras.main.setBackgroundColor('#222');
         this.obstacles = [];
-        this.floorTiles = new Map();
         
-        // Centrage de la carte
         this.mapOffsetX = (this.sys.game.config.width - (MAP_SIZE * TILE_SIZE)) / 2;
         this.mapOffsetY = (this.sys.game.config.height - (MAP_SIZE * TILE_SIZE)) / 2;
         
-        // Conteneur pour tout le niveau
         this.levelContainer = this.add.container(this.mapOffsetX, this.mapOffsetY);
 
         if (!window.GAME_STATE.mapMatrix) this.generateNewMap();
@@ -113,19 +112,11 @@ class VillageScene extends Phaser.Scene {
 
         this.renderMap();
 
-        // Spawn
         if (!this.playerGridPos) this.playerGridPos = { x: 2, y: 22 };
         const pPos = gridToScreen(this.playerGridPos.x, this.playerGridPos.y);
         
         this.player = this.add.image(pPos.x, pPos.y, 'tux');
         this.levelContainer.add(this.player);
-
-        // Camera follow
-        //this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
-        // On recentre le conteneur par rapport à la caméra
-        // Note: En 2D simple, si la map est petite, on peut juste centrer la cam
-        //this.cameras.main.setZoom(1.5);
-        //this.cameras.main.centerOn(this.mapOffsetX + pPos.x, this.mapOffsetY + pPos.y);
 
         this.cursors = this.input.keyboard.createCursorKeys();
         this.lastMove = 0;
@@ -133,17 +124,14 @@ class VillageScene extends Phaser.Scene {
         this.updateInventoryUI();
         
         if(!window.GAME_STATE.items.csCut) {
-            this.showUI("Le Portail Rouge mène au défi Tycoon...");
+            this.showUI("Utilisez les flèches pour explorer.");
         }
     }
 
     generateNewMap() {
-        // --- MEME LOGIQUE ROBUSTE QUE LA VERSION ISO ---
         const matrix = Array(MAP_SIZE).fill().map(() => Array(MAP_SIZE).fill(T_GRASS));
         const setM = (x, y, val) => { if(x>=0 && x<MAP_SIZE && y>=0 && y<MAP_SIZE) matrix[y][x] = val; };
         
-        const castleRect = { x: 1, y: 1, w: 7, h: 7 };
-
         const drawJaggedPath = (x1, y1, x2, y2) => {
             let cx = x1, cy = y1;
             setM(cx, cy, T_PATH);
@@ -166,28 +154,35 @@ class VillageScene extends Phaser.Scene {
         const portalFinalX=2, portalFinalY=2; 
         const portalHiddenX=0, portalHiddenY=0; 
         const portalAncientX=20, portalAncientY=22; 
+        
+        // --- COORDONNÉES DU PORTAIL AUDIO ---
+        const portalJsX=3, portalJsY=24; 
+        // ------------------------------------
 
-        // 1. Spawn & Chemins
+        // Chemins
         setM(spawnX, spawnY, T_SPAWN);
         drawJaggedPath(spawnX, spawnY, castleGateX, castleGateY);
         drawJaggedPath(castleGateX, castleGateY, 12, 12);
         drawJaggedPath(12, 12, forestEntryX, forestEntryY);
         drawJaggedPath(forestEntryX, forestEntryY, portalAncientX, portalAncientY);
+        drawJaggedPath(12, 12, portalJsX, portalJsY); // Chemin vers le portail audio
 
-        // 2. Objets (Après les chemins)
+        // Objets
         setM(portalFinalX, portalFinalY, T_PORTAL_FINAL);
         setM(portalHiddenX, portalHiddenY, T_PORTAL_HIDDEN);
         setM(portalAncientX, portalAncientY, T_PORTAL_ANCIENT);
+        setM(portalJsX, portalJsY, T_PORTAL_JS);
 
-        // 3. Protection
+        // Protection (Pas d'arbres)
         const protectedPoints = [
             {x: spawnX, y: spawnY},
             {x: portalFinalX, y: portalFinalY}, {x: portalHiddenX, y: portalHiddenY},
-            {x: portalAncientX, y: portalAncientY},
+            {x: portalAncientX, y: portalAncientY}, {x: portalJsX, y: portalJsY},
             {x: castleGateX, y: castleGateY}, {x: forestEntryX, y: forestEntryY}
         ];
 
-        // 4. Arbres
+        // Forêt
+        const castleRect = { x: 1, y: 1, w: 7, h: 7 };
         for(let y=0; y<MAP_SIZE; y++) {
             for(let x=0; x<MAP_SIZE; x++) {
                 if(matrix[y][x] !== T_GRASS) continue;
@@ -197,7 +192,7 @@ class VillageScene extends Phaser.Scene {
             }
         }
         
-        // 5. Bulldozer
+        // Accès garanti
         const ensureAccessibility = (targetX, targetY) => {
             let cx = 12; let cy = 12; 
             while(cx !== targetX || cy !== targetY) {
@@ -207,15 +202,13 @@ class VillageScene extends Phaser.Scene {
             }
         };
         ensureAccessibility(portalAncientX, portalAncientY); 
-        for(let x=0; x<10; x++) { if(matrix[0][x] === T_TREE) matrix[0][x] = T_GRASS; }
-        for(let y=0; y<5; y++) { if(matrix[y][0] === T_TREE) matrix[y][0] = T_GRASS; }
+        ensureAccessibility(portalJsX, portalJsY);
 
         window.GAME_STATE.mapMatrix = matrix;
     }
 
     renderMap() {
         this.obstacles = [];
-        // Nettoyage conteneur sauf player
         this.levelContainer.each(child => {
             if (child !== this.player) child.destroy();
         });
@@ -230,12 +223,10 @@ class VillageScene extends Phaser.Scene {
                 if (val === T_PATH || val === T_SPAWN) tex = 'path';
                 
                 const pos = gridToScreen(x, y);
-                // Sol
                 const tile = this.add.image(pos.x, pos.y, tex);
                 this.levelContainer.add(tile);
-                this.levelContainer.sendToBack(tile); // Le sol toujours en bas
+                this.levelContainer.sendToBack(tile);
 
-                // Objets
                 let objTex = null;
                 let solid = false;
                 let type = 'prop';
@@ -244,6 +235,7 @@ class VillageScene extends Phaser.Scene {
                 else if (val === T_PORTAL_FINAL) { objTex = 'portal_final_tex'; type='portal_final'; solid=false; }
                 else if (val === T_PORTAL_ANCIENT) { objTex = 'portal_ancient_tex'; type='portal_ancient'; solid=false; }
                 else if (val === T_PORTAL_HIDDEN && !window.GAME_STATE.items.csCut) { objTex = 'portal_hidden_tex'; type='portal_hidden'; solid=false; }
+                else if (val === T_PORTAL_JS) { objTex = 'portal_js_tex'; type='portal_js'; solid=false; }
 
                 if (objTex) {
                     const obj = this.add.image(pos.x, pos.y, objTex);
@@ -259,9 +251,7 @@ class VillageScene extends Phaser.Scene {
         const cx=1, cy=1, cw=6, ch=6;
         for(let y=cy; y<cy+ch; y++) {
             for(let x=cx; x<cx+cw; x++) {
-                // Murs sur le périmètre
                 if(x===cx || x===cx+cw-1 || y===cy || y===cy+ch-1) {
-                    // Porte Sud
                     if(x === cx+3 && y === cy+ch-1) {
                         if (window.GAME_STATE.windosAlive) {
                             const pos = gridToScreen(x, y);
@@ -293,9 +283,6 @@ class VillageScene extends Phaser.Scene {
                 const ny = this.playerGridPos.y + dy;
 
                 if (this.isValidMove(nx, ny)) {
-                    // Check items sur la case (car pas solides)
-                    this.checkItems(nx, ny);
-
                     this.playerGridPos.x = nx;
                     this.playerGridPos.y = ny;
                     const dest = gridToScreen(nx, ny);
@@ -313,36 +300,22 @@ class VillageScene extends Phaser.Scene {
         }
     }
 
-    checkItems(x, y) {
-        return;
-    }
-
-    updateInventoryUI() {
-        const slot3 = document.getElementById('slot-3');
-        
-        if(window.GAME_STATE.items.csCut) {
-            slot3.classList.add('filled'); slot3.title = "CS-Coupe"; slot3.innerHTML = "✂️"; slot3.style.borderColor = "#9c27b0";
-        }
-    }
-
     isValidMove(x, y) {
         if (x < 0 || y < 0 || x >= MAP_SIZE || y >= MAP_SIZE) return false;
         
         const obs = this.obstacles.find(o => o.gx === x && o.gy === y);
         if (obs) {
-            // CS-COUPE (Arbres)
             if (obs.type === 'tree') {
                 if(window.GAME_STATE.items.csCut) {
                     this.showUI("Coupe ! Arbre détruit.");
                     obs.sprite.destroy();
                     this.obstacles.splice(this.obstacles.indexOf(obs), 1);
                     this.mapMatrix[y][x] = T_GRASS; 
-                    return false; // On attend le prochain tour pour avancer
+                    return false; 
                 } else {
                     return false;
                 }
             }
-            // PORTAIL SECRET
             if (obs.type === 'portal_hidden') {
                 this.showUI("Vous trouvez la CS-Coupe !");
                 window.GAME_STATE.items.csCut = true;
@@ -351,26 +324,43 @@ class VillageScene extends Phaser.Scene {
                 this.obstacles.splice(this.obstacles.indexOf(obs), 1);
                 return false;
             }
-            // ENNEMI
             if (obs.type === 'enemy') {
                  this.showUI("WindOS : 'Accès refusé !'");
                  return false;
             }
-            // PORTAIL FINAL
             if (obs.type === 'portal_final') {
                 this.showUI("Victoire ! Système Linux restauré.");
                 return false;
             }
-            // PORTAIL ANCIEN -> TYCOON
             if (obs.type === 'portal_ancient') {
                 this.showUI("Chargement du NIRD Tycoon...");
-                startTycoonMinigame(); // Lancement du minijeu externe
+                startTycoonMinigame();
+                return false;
+            }
+            // --- PORTAIL VERS VISUALISATION AUDIO ---
+            if (obs.type === 'portal_js') {
+                this.showUI("Lancement de la Visualisation Audio...");
+                
+                localStorage.setItem("previous_map", "intro");
+                
+                setTimeout(() => {
+                    // --- REDIRECTION MODIFIÉE ICI ---
+                    window.location.href = '../visualisation-audio/visual-audio.html'; 
+                }, 1000);
+
                 return false;
             }
 
             if (obs.solid) return false;
         }
         return true;
+    }
+
+    updateInventoryUI() {
+        const slot3 = document.getElementById('slot-3');
+        if(window.GAME_STATE.items.csCut && slot3) {
+            slot3.classList.add('filled'); slot3.title = "CS-Coupe"; slot3.innerHTML = "✂️"; slot3.style.borderColor = "#9c27b0";
+        }
     }
 
     showUI(text) {
@@ -385,7 +375,7 @@ class VillageScene extends Phaser.Scene {
 }
 
 // =========================================================
-// MINIGAME : CHARGEMENT DU TYCOON EXTERNE (IFRAME)
+// MINIGAME
 // =========================================================
 function startTycoonMinigame() {
     const overlay = document.createElement('div');
