@@ -1,0 +1,126 @@
+/* --- Reset et Base --- */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #ffffff;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden; 
+    background-color: #0f2027;
+}
+
+/* --- Le Fond --- */
+.background-wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    
+    /* REMPLACE PAR TON IMAGE */
+    background-image: url('linux_vs_windaube.png'); 
+    
+    background-size: cover;
+    background-position: center;
+    /* État initial : sombre et taille normale */
+    filter: brightness(0.4); 
+    transform: scale(1);
+    
+    /* NOTE : Plus de 'transition' ici, c'est le JS qui gère */
+}
+
+/* --- Conteneur Principal --- */
+.container {
+    text-align: center;
+    width: 90%;
+    max-width: 800px;
+    padding: 2.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    
+    /* État initial : visible */
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* --- Typographie et Lore (Inchangé) --- */
+h1 {
+    font-size: 3rem;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(to right, #4facfe 0%, #00f2fe 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 30px rgba(79, 172, 254, 0.4);
+}
+
+h2 {
+    font-size: 1.2rem;
+    color: #a8ff78;
+    margin-bottom: 2rem;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    font-weight: 600;
+}
+
+.lore-box {
+    background: rgba(0, 0, 0, 0.4);
+    border-left: 4px solid #a8ff78;
+    padding: 1.5rem;
+    margin-bottom: 2.5rem;
+    text-align: left;
+    border-radius: 0 10px 10px 0;
+}
+
+.lore-box h3 {
+    color: #ffffff;
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+}
+
+.lore-text {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: #e0e0e0;
+    margin-bottom: 1rem;
+}
+
+.lore-text strong { color: #4facfe; }
+.lore-text em { color: #ff6b6b; font-style: normal; font-weight: bold; }
+
+/* --- Bouton --- */
+.btn-start {
+    display: inline-block;
+    padding: 18px 50px;
+    font-size: 1.4rem;
+    font-weight: bold;
+    color: #0f2027;
+    background: linear-gradient(to right, #a8ff78, #78ffd6);
+    border: none;
+    border-radius: 50px;
+    text-decoration: none;
+    transition: transform 0.2s; /* Petite anim au survol reste en CSS car légère */
+    cursor: pointer;
+    box-shadow: 0 0 20px rgba(168, 255, 120, 0.4);
+}
+
+.btn-start:hover {
+    transform: scale(1.05);
+}
+
+.footer {
+    margin-top: 2rem;
+    font-size: 0.85rem;
+    opacity: 0.6;
+}
+
+@media (max-width: 600px) {
+    h1 { font-size: 2.2rem; }
+    .container { padding: 1.5rem; width: 95%; }
+}
