@@ -427,6 +427,7 @@ class VillageScene extends Phaser.Scene {
             }
             if (obs.type === 'portal_js') {
                 this.showUI("Voyage vers la zone suivante...");
+                this.saveProgress();
                 localStorage.setItem("previous_map", "intro");
                 setTimeout(() => {
                     window.location.href = '../visualisation-audio/visual-audio.html'; 
