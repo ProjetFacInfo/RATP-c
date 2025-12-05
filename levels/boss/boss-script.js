@@ -122,25 +122,35 @@ function updateSubMenuUI() {
     });
 }
 function executeMenuAction() {
+    // --- CORRECTIF ANTI-SPAM ---
+    // Si on n'est pas strictement dans le menu (ex: animation en cours), on arrête tout.
+    if (gameState !== 'MENU') return;
+
+    // On verrouille immédiatement l'état pour empêcher un 2ème clic
+    gameState = 'WAITING'; 
+    // ---------------------------
+
     const action = ['FIGHT', 'ACT', 'ITEM', 'MERCY'][menuIndex];
 
     if (action === 'FIGHT') {
-        // Choix d'une phrase aléatoire + Espace après le saut de ligne si besoin
         const text = getRandomText('FIGHT');
         
         typeText(text, () => {
-            boss.hp -= 15; // Dégâts standards
+            boss.hp -= 15;
             updateBossUI();
             
-            // Effet visuel de dégât sur le logo
+            // Effet visuel
             const logo = document.querySelector('.goliath-logo');
-            logo.style.filter = "brightness(0.5) sepia(1) hue-rotate(-50deg) saturate(5)";
-            setTimeout(() => logo.style.filter = "", 200);
+            if(logo) {
+                logo.style.filter = "brightness(0.5) sepia(1) hue-rotate(-50deg) saturate(5)";
+                setTimeout(() => logo.style.filter = "", 200);
+            }
             
             setTimeout(startEnemyTurn, 1000);
         });
     } 
     else if (action === 'ACT') {
+        // Pour ACT, on passe en sous-menu, donc c'est ok de changer l'état
         gameState = 'SUBMENU';
         document.getElementById('act-menu').classList.remove('hidden');
         subMenuIndex = 0;
@@ -152,7 +162,7 @@ function executeMenuAction() {
         typeText("* Vous utilisez un Tuto en ligne.\n* Vos PV sont restaurés !", () => setTimeout(startEnemyTurn, 1000));
     }
     else if (action === 'MERCY') {
-        if (boss.hp <= 0 || actCount >= 3) { // Il faut 3 actions pour épargner
+        if (boss.hp <= 0 || actCount >= 3) {
             victory();
         } else {
             const text = getRandomText('MERCY');
@@ -160,29 +170,30 @@ function executeMenuAction() {
         }
     }
 }
-
 function executeSubAction() {
+    // --- CORRECTIF ANTI-SPAM ---
+    if (gameState !== 'SUBMENU') return;
+    gameState = 'WAITING'; // On verrouille
+    // ---------------------------
+
     document.getElementById('act-menu').classList.add('hidden');
     const actType = subOptions[subMenuIndex].dataset.act;
     
     if (actType === 'CHECK') {
         const text = getRandomText('CHECK');
-        typeText(text, () => setTimeout(startEnemyTurn, 2000)); // Un peu plus long pour lire
+        typeText(text, () => setTimeout(startEnemyTurn, 2000));
     } 
     else if (actType === 'INSTALL_LINUX') {
         actCount++;
-        boss.hp -= 12; // Ça fait mal au boss !
+        boss.hp -= 12;
         updateBossUI();
-        
         const text = getRandomText('INSTALL_LINUX');
         typeText(text, () => setTimeout(startEnemyTurn, 1500));
     } 
     else if (actType === 'DEBLOAT') {
         actCount++;
-        // Soigne un peu le joueur car le PC va mieux
         player.hp = Math.min(player.hp + 2, player.maxHp);
         updatePlayerUI();
-
         const text = getRandomText('DEBLOAT');
         typeText(text, () => setTimeout(startEnemyTurn, 1500));
     }
