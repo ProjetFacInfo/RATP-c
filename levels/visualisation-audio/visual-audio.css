@@ -8,6 +8,7 @@ body {
     color: #00ff00;
 }
 
+/* OVERLAY (MENU) */
 #overlay {
     position: absolute; top: 0; left: 0; width: 100%; height: 100%;
     display: flex; flex-direction: column;
@@ -17,7 +18,12 @@ body {
     transition: opacity 0.5s;
 }
 
-#overlay.hidden { opacity: 0; pointer-events: none; }
+/* Quand l'overlay est caché, on le met en z-index négatif pour cliquer sur le bouton Stop */
+#overlay.hidden { 
+    opacity: 0; 
+    pointer-events: none; 
+    z-index: -1; 
+}
 
 h1 {
     font-size: 3rem; color: #fff; margin-bottom: 5px;
@@ -25,6 +31,7 @@ h1 {
     text-align: center;
 }
 
+/* BOUTONS GÉNÉRAUX */
 .btn {
     padding: 15px 40px;
     font-size: 1.2rem;
@@ -44,19 +51,14 @@ h1 {
     padding: 10px 20px;
     font-size: 1rem;
     margin-left: 10px;
-    margin-top: 0; /* Reset margin for inline layout */
+    margin-top: 0;
 }
 
-/* Styles pour les presets */
-.separator {
-    margin: 20px 0;
-    color: #555;
-    font-size: 0.9rem;
-}
+/* PRESETS */
+.separator { margin: 20px 0; color: #555; font-size: 0.9rem; }
 
 .preset-container {
-    display: flex;
-    align-items: center;
+    display: flex; align-items: center;
     background: rgba(0, 50, 0, 0.5);
     padding: 10px;
     border: 1px solid #00ff00;
@@ -64,18 +66,15 @@ h1 {
 }
 
 select {
-    padding: 10px;
-    font-family: inherit;
-    background: #000;
-    color: #00ff00;
+    padding: 10px; font-family: inherit;
+    background: #000; color: #00ff00;
     border: 1px solid #00ff00;
-    font-size: 1rem;
-    cursor: pointer;
-    outline: none;
+    font-size: 1rem; cursor: pointer; outline: none;
 }
 
 input[type="file"] { display: none; }
 
+/* HUD */
 #hud {
     position: absolute; top: 20px; left: 20px;
     pointer-events: none;
@@ -86,14 +85,10 @@ input[type="file"] { display: none; }
     border: 1px solid #00ff00;
 }
 
-#heat-bar-container {
-    margin-top: 5px;
-    width: 100%; height: 5px; background: #333;
-}
-#heat-bar {
-    width: 0%; height: 100%; background: #ff0000; transition: width 0.1s;
-}
+#heat-bar-container { margin-top: 5px; width: 100%; height: 5px; background: #333; }
+#heat-bar { width: 0%; height: 100%; background: #ff0000; transition: width 0.1s; }
 
+/* BOUTONS COINS (Retour & Stop) */
 .btn-corner {
     position: absolute; top: 20px; right: 20px;
     padding: 10px 20px; font-family: inherit; font-size: 1rem; font-weight: bold;
@@ -101,3 +96,22 @@ input[type="file"] { display: none; }
     cursor: pointer; box-shadow: 0 0 15px #00ff00; z-index: 1000;
 }
 .btn-corner:hover { background: #000; color: #00ff00; box-shadow: 0 0 25px #00ff00; }
+
+/* Style spécifique pour le bouton STOP (Gauche + Rouge) */
+.btn-corner.left {
+    right: auto; 
+    left: 20px;
+    
+    /* MODIFICATION ICI : On augmente cette valeur pour descendre le bouton */
+    /* Ancien : top: 100px; */
+    top: 180px;  /* <-- Nouvelle valeur plus grande */
+    
+    background: #ff0000;
+    border-color: #ff0000;
+    color: #fff;
+    box-shadow: 0 0 15px #ff0000;
+    z-index: 2000; /* On s'assure qu'il est bien au-dessus */
+}
+.btn-corner.left:hover { background: #000; color: #ff0000; box-shadow: 0 0 25px #ff0000; }
+
+.hidden { display: none !important; }

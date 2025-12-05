@@ -64,6 +64,7 @@ function init() {
 }
 
 function createWorld() {
+    // Noyau XXL
     const geoCore = new THREE.IcosahedronGeometry(12, 2); const matCore = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
     core = new THREE.Mesh(geoCore, matCore); const inner = new THREE.Mesh(new THREE.IcosahedronGeometry(9, 1), new THREE.MeshBasicMaterial({ color: 0xffffff }));
     core.add(inner); scene.add(core);
@@ -110,6 +111,7 @@ function launchPenguin() {
 
 const audioEl = document.getElementById('audio');
 const overlay = document.getElementById('overlay');
+const stopBtn = document.getElementById('stop-btn');
 
 // Fonction pour démarrer l'AudioContext
 function startAudioContext() {
@@ -125,6 +127,25 @@ function startAudioContext() {
     if (audioContext.state === 'suspended') audioContext.resume();
 }
 
+function startPlayback() {
+    overlay.classList.add('hidden'); // Cacher menu
+    stopBtn.classList.remove('hidden'); // Montrer bouton Stop
+}
+
+function resetToMenu() {
+    audioEl.pause();
+    audioEl.currentTime = 0;
+    
+    overlay.classList.remove('hidden'); // Montrer menu
+    stopBtn.classList.add('hidden'); // Cacher bouton Stop
+    
+    // Reset couleur noyau
+    if(core) {
+        core.children[0].material.color.setRGB(0, 1, 0);
+        core.material.color.setRGB(0, 1, 0);
+    }
+}
+
 // CAS 1 : Upload
 document.getElementById('audio-input').addEventListener('change', function() {
     const file = this.files[0];
@@ -132,7 +153,7 @@ document.getElementById('audio-input').addEventListener('change', function() {
         startAudioContext();
         audioEl.src = URL.createObjectURL(file);
         audioEl.play();
-        overlay.classList.add('hidden');
+        startPlayback();
     }
 });
 
@@ -143,9 +164,15 @@ document.getElementById('play-preset-btn').addEventListener('click', function() 
         startAudioContext();
         audioEl.src = selectedPath;
         audioEl.play().catch(e => console.error("Erreur lecture:", e));
-        overlay.classList.add('hidden');
+        startPlayback();
     }
 });
+
+// Événement Fin de musique
+audioEl.addEventListener('ended', resetToMenu);
+
+// Événement Bouton Stop
+stopBtn.addEventListener('click', resetToMenu);
 
 // --- GESTION BOUTON RETOUR ---
 document.getElementById('exit-btn').addEventListener('click', () => {
@@ -153,9 +180,6 @@ document.getElementById('exit-btn').addEventListener('click', () => {
     let url = '../intro/intro.html';
     if(prev === 'medium') url = '../medium/medium.html';
     else if(prev === 'end') url = '../end/end.html';
-    // Fallback intro si rien n'est trouvé
-    
-    console.log(`Retour vers ${url} (Origine: ${prev})`);
     window.location.href = url;
 });
 
@@ -185,7 +209,7 @@ function animate() {
     if(heatPercent > 65) document.getElementById('heat-bar').style.background = "#ff0000";
     else document.getElementById('heat-bar').style.background = "#00ff00";
 
-    // Lancer Pingouin si Surchauffe
+    // Lancer Pingouin si Surchauffe (Volume > 130)
     if (avgVolume > 130 && canLaunch) {
         launchPenguin(); canLaunch = false; setTimeout(() => { canLaunch = true; }, 150); 
     }
