@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>NIRD Kingdom - Oval Portals</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #87CEEB; }
+        #info {
+            position: absolute; top: 10px; left: 10px; color: #111; 
+            font-family: 'Segoe UI', sans-serif; background: rgba(255,255,255,0.9); 
+            padding: 15px; border-radius: 8px; pointer-events: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); user-select: none;
+        }
+        #inventory {
+            position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 10px; pointer-events: none;
+        }
+        .item-slot {
+            width: 50px; height: 50px; background: rgba(0,0,0,0.5); border: 2px solid #fff;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 24px; opacity: 0.3; transition: 0.3s;
+        }
+        .item-slot.active { opacity: 1; background: rgba(0, 255, 0, 0.3); border-color: #0f0; }
+        #damage-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: red; opacity: 0; pointer-events: none; transition: opacity 0.5s;
+        }
+    </style>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+<body>
+    <div id="damage-overlay"></div>
+    <div id="info">
+        <b>🏰 NIRD KINGDOM</b><br>
+        ⬆️/⬇️ : Avancer / Reculer<br>
+        ⬅️/➡️ : Tourner la tête<br>
+        ⚠️ <b>Évitez les renards !</b><br>
+        <i>Les portails sont des ovales fixes.</i>
+    </div>
+
+    <div id="inventory">
+        <div id="slot-key" class="item-slot">🔑</div>
+        <div id="slot-cut" class="item-slot">✂️</div>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+
+        // --- CONFIGURATION ---
+        const MAP_SIZE = 30;
+        const TILE_SIZE = 10;
+
+        const T_GRASS = 0; const T_PATH = 1; const T_TREE = 2; const T_KEY = 3;
+        const T_PORTAL_FINAL = 5; const T_PORTAL_HIDDEN = 6;
+        const T_WALL = 8; const T_SPAWN = 9;
+        const T_WATER = 10; const T_BRIDGE = 11;
+
+        // Etat du jeu
+        const gameState = { hasKey: false, hasCut: false };
+
+        // --- TEXTURES PROCÉDURALES ---
+        function createNoiseTexture(colorHex, noiseAmount = 20) {
+            const size = 64;
+            const canvas = document.createElement('canvas');
+            canvas.width = size; canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#' + colorHex.toString(16).padStart(6, '0');
+            ctx.fillRect(0,0,size,size);
+            for(let i=0; i<200; i++) {
+                ctx.fillStyle = `rgba(0,0,0,${Math.random() * (noiseAmount/100)})`;
+                ctx.fillRect(Math.random()*size, Math.random()*size, 2, 2);
+            }
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        const MATS = {
+            grass: new THREE.MeshStandardMaterial({ map: createNoiseTexture(0x4caf50, 30) }),
+            path: new THREE.MeshStandardMaterial({ map: createNoiseTexture(0xe6c577, 20) }),
+            water: new THREE.MeshPhongMaterial({ color: 0x2196f3, shininess: 100, opacity: 0.8, transparent: true }),
+            stone: new THREE.MeshStandardMaterial({ map: createNoiseTexture(0x9e9e9e, 40), roughness: 0.8 }),
+            roof: new THREE.MeshStandardMaterial({ map: createNoiseTexture(0x2c3e50, 20), roughness: 0.6 }),
+            wood: new THREE.MeshStandardMaterial({ map: createNoiseTexture(0x5d4037, 40) }),
+            leaves: new THREE.MeshStandardMaterial({ color: 0x2e7d32 }),
+            portalCrystal: new THREE.MeshStandardMaterial({ color: 0xffd700, emissive: 0xffaa00, emissiveIntensity: 1.5, metalness: 0.5, roughness: 0.1 }),
+            portalHidden: new THREE.MeshStandardMaterial({ color: 0x9c27b0, emissive: 0x9c27b0, emissiveIntensity: 1.5 }),
+            fox: new THREE.MeshStandardMaterial({ color: 0xe65100 }),
+            mountain: new THREE.MeshStandardMaterial({ color: 0x3e2723, roughness: 0.9 })
+        };
+
+        // --- SCÈNE ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x87CEEB);
+        scene.fog = new THREE.Fog(0x87CEEB, 40, 300);
+
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 600);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        document.body.appendChild(renderer.domElement);
+
+        // --- ENVIRONNEMENT ---
+        const sunLight = new THREE.DirectionalLight(0xffffff, 1.5);
+        sunLight.position.set(100, 200, 50);
+        sunLight.castShadow = true;
+        sunLight.shadow.mapSize.set(2048, 2048);
+        sunLight.shadow.camera.left = -200; sunLight.shadow.camera.right = 200;
+        sunLight.shadow.camera.top = 200; sunLight.shadow.camera.bottom = -200;
+        scene.add(sunLight);
+        scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 0.6));
+
+        // --- GÉNÉRATION MAP ---
+        const mapMatrix = Array(MAP_SIZE).fill().map(() => Array(MAP_SIZE).fill(T_GRASS));
+        const setM = (x, y, val) => { if(x>=0 && x<MAP_SIZE && y>=0 && y<MAP_SIZE) mapMatrix[y][x] = val; };
+
+        // Rivière
+        for(let x=0; x<MAP_SIZE; x++) {
+            const riverY = Math.floor(12 + Math.sin(x * 0.5) * 3); 
+            setM(x, riverY, T_WATER); setM(x, riverY+1, T_WATER);
+        }
+
+        const spawnX=2, spawnY=22;
+        const castleGateX=4, castleGateY=6;
+        const keyX=25, keyY=22; 
+        const portalFinalX=2, portalFinalY=2;
+        const portalHiddenX=0, portalHiddenY=0; 
+
+        setM(spawnX, spawnY, T_SPAWN);
+        setM(portalFinalX, portalFinalY, T_PORTAL_FINAL);
+        setM(portalHiddenX, portalHiddenY, T_PORTAL_HIDDEN);
+        setM(keyX, keyY, T_KEY);
+
+        // Chemins
+        const drawPath = (x1, y1, x2, y2) => {
+            let cx = x1, cy = y1;
+            setM(cx, cy, T_PATH);
+            while(cx !== x2 || cy !== y2) {
+                if(Math.random()>0.5 && cx!=x2) cx += Math.sign(x2-cx);
+                else if(cy!=y2) cy += Math.sign(y2-cy);
+                else if(cx!=x2) cx += Math.sign(x2-cx);
+                if(mapMatrix[cy][cx] === T_WATER) setM(cx, cy, T_BRIDGE);
+                else setM(cx, cy, T_PATH);
+            }
+        };
+        drawPath(spawnX, spawnY, castleGateX, castleGateY);
+        drawPath(castleGateX, castleGateY, 15, 15);
+        drawPath(15, 15, keyX, keyY);
+        
+        // Accès portail caché
+        if(mapMatrix[0][1] === T_TREE) mapMatrix[0][1] = T_GRASS;
+        if(mapMatrix[1][0] === T_TREE) mapMatrix[1][0] = T_GRASS;
+        if(mapMatrix[1][1] === T_TREE) mapMatrix[1][1] = T_GRASS;
+
+        // Arbres
+        const castleRect = { x: 1, y: 1, w: 7, h: 7 };
+        const protectedPoints = [{x: portalHiddenX, y: portalHiddenY}, {x: spawnX, y: spawnY}];
+        
+        for(let y=0; y<MAP_SIZE; y++) {
+            for(let x=0; x<MAP_SIZE; x++) {
+                if(mapMatrix[y][x] !== T_GRASS) continue;
+                if (x >= castleRect.x && x < castleRect.x + castleRect.w && y >= castleRect.y && y < castleRect.y + castleRect.h) continue;
+                if(protectedPoints.some(p => p.x === x && p.y === y)) continue;
+                if(Math.random() < 0.25) mapMatrix[y][x] = T_TREE;
+            }
+        }
+
+        // --- CONSTRUCTEURS 3D ---
+        const floorGeo = new THREE.BoxGeometry(TILE_SIZE, 1, TILE_SIZE);
+        const trunkGeo = new THREE.CylinderGeometry(1.5, 2, 8, 6);
+        const leavesGeo = new THREE.DodecahedronGeometry(5);
+        // Géométrie Portail : Sphère de base qu'on va déformer
+        const portalGeo = new THREE.SphereGeometry(1, 32, 32); 
+
+        const sceneObjects = []; 
+
+        function createObject(mesh, x, z, type) {
+            mesh.position.set(x*TILE_SIZE, 0, z*TILE_SIZE);
+            scene.add(mesh);
+            sceneObjects.push({ mesh: mesh, x: x, z: z, type: type });
+        }
+
+        // 1. Décoration Bords
+        const oceanGeo = new THREE.PlaneGeometry(1000, 1000);
+        const oceanMesh = new THREE.Mesh(oceanGeo, MATS.water);
+        oceanMesh.rotation.x = -Math.PI/2; oceanMesh.position.y = -3;
+        scene.add(oceanMesh);
+
+        const mountGeo = new THREE.ConeGeometry(TILE_SIZE, TILE_SIZE*3, 4);
+        for(let i=-5; i<MAP_SIZE+5; i++) {
+            for(let j=-5; j<MAP_SIZE+5; j++) {
+                if(i<0 || i>=MAP_SIZE || j<0 || j>=MAP_SIZE) {
+                    const m = new THREE.Mesh(mountGeo, MATS.mountain);
+                    m.position.set(i*TILE_SIZE, Math.random()*5 - 2, j*TILE_SIZE);
+                    const s = 1 + Math.random(); m.scale.set(s, s*1.5, s);
+                    scene.add(m);
+                }
+            }
+        }
+
+        // 2. Map Interne
+        for(let y=0; y<MAP_SIZE; y++) {
+            for(let x=0; x<MAP_SIZE; x++) {
+                const val = mapMatrix[y][x];
+                
+                // SOL
+                let mat = MATS.grass; let h = -0.5;
+                if (val === T_WATER) { mat = MATS.water; h = -2; }
+                else if (val === T_PATH || val === T_SPAWN) { mat = MATS.path; h = -0.4; }
+                else if (val === T_BRIDGE) {
+                    const b = new THREE.Mesh(floorGeo, MATS.wood);
+                    b.position.set(x*TILE_SIZE, 0, y*TILE_SIZE); b.receiveShadow = true; scene.add(b);
+                    const py = new THREE.Mesh(new THREE.CylinderGeometry(1,1,4), MATS.wood);
+                    py.position.set(x*TILE_SIZE, -2, y*TILE_SIZE); scene.add(py);
+                    continue; 
+                }
+                const f = new THREE.Mesh(floorGeo, mat);
+                f.position.set(x*TILE_SIZE, h, y*TILE_SIZE); f.receiveShadow = true; scene.add(f);
+
+                // OBJETS
+                if(val === T_TREE) {
+                    const t = new THREE.Group();
+                    const tr = new THREE.Mesh(trunkGeo, MATS.wood); tr.position.y=4; tr.castShadow=true;
+                    const lv = new THREE.Mesh(leavesGeo, MATS.leaves); lv.position.y=9; lv.castShadow=true;
+                    t.add(tr); t.add(lv);
+                    t.scale.setScalar(0.7 + Math.random()*0.3); t.rotation.y = Math.random()*Math.PI;
+                    createObject(t, x, y, 'tree');
+                }
+                else if(val === T_PORTAL_FINAL) {
+                    const pGroup = new THREE.Group();
+                    // Ovale Plein (Sphère écrasée)
+                    const oval = new THREE.Mesh(portalGeo, MATS.portalCrystal);
+                    // Scale: Largeur (2.5), Hauteur (4.5), Épaisseur (0.2)
+                    oval.scale.set(2.5, 4.5, 0.2); 
+                    oval.position.y = 5;
+                    pGroup.add(oval);
+                    
+                    const pl = new THREE.PointLight(0xffaa00, 2, 20);
+                    pl.position.y = 5;
+                    pGroup.add(pl);
+
+                    // Particules
+                    for(let i=0; i<6; i++) {
+                        const s = new THREE.Mesh(new THREE.OctahedronGeometry(0.3), MATS.portalCrystal);
+                        s.position.set((Math.random()-0.5)*5, 3+Math.random()*4, (Math.random()-0.5)*2);
+                        pGroup.add(s);
+                    }
+
+                    pGroup.userData = {anim:true, isPortal:true};
+                    createObject(pGroup, x, y, 'portal_final');
+                }
+                else if(val === T_PORTAL_HIDDEN) {
+                    // Ovale Violet Plein
+                    const p = new THREE.Mesh(portalGeo, MATS.portalHidden);
+                    p.scale.set(2.5, 4.5, 0.2); // Ovale
+                    p.position.y = 5; 
+                    p.userData = {anim:true, isPortal:true};
+                    createObject(p, x, y, 'portal_hidden');
+                }
+                else if(val === T_KEY) {
+                    const k = new THREE.Mesh(new THREE.OctahedronGeometry(2), new THREE.MeshStandardMaterial({color:0xffd700}));
+                    k.position.y = 3; k.userData = {anim:true};
+                    createObject(k, x, y, 'key');
+                }
+            }
+        }
+
+        // 3. Château
+        const cx=1, cy=1, cw=6, ch=6;
+        function createTower(x, z, heightScale = 1) {
+            const group = new THREE.Group();
+            const baseGeo = new THREE.CylinderGeometry(TILE_SIZE/1.5, TILE_SIZE/1.2, 15 * heightScale, 12);
+            const base = new THREE.Mesh(baseGeo, MATS.stone);
+            base.position.y = (15 * heightScale) / 2; base.castShadow = true;
+            group.add(base);
+            const roofGeo = new THREE.ConeGeometry(TILE_SIZE, 10, 12);
+            const roof = new THREE.Mesh(roofGeo, MATS.roof);
+            roof.position.y = (15 * heightScale) + 5;
+            group.add(roof);
+            group.position.set(x * TILE_SIZE, 0, z * TILE_SIZE);
+            scene.add(group);
+            mapMatrix[z][x] = T_WALL;
+        }
+        function createWall(x, z) {
+            const group = new THREE.Group();
+            const w = new THREE.Mesh(new THREE.BoxGeometry(TILE_SIZE, 12, TILE_SIZE), MATS.stone);
+            w.position.y = 6; w.castShadow = true; group.add(w);
+            const c = new THREE.Mesh(new THREE.BoxGeometry(TILE_SIZE, 2, TILE_SIZE/2), MATS.stone);
+            c.position.y = 13; group.add(c);
+            group.position.set(x * TILE_SIZE, 0, z * TILE_SIZE);
+            scene.add(group);
+            mapMatrix[z][x] = T_WALL;
+        }
+
+        for(let y=cy; y<cy+ch; y++) {
+            for(let x=cx; x<cx+cw; x++) {
+                if(x===cx || x===cx+cw-1 || y===cy || y===cy+ch-1) {
+                    if((x===cx || x===cx+cw-1) && (y===cy || y===cy+ch-1)) createTower(x, y, 1.2);
+                    else if(x === cx+3 && y === cy+ch-1) {
+                        const bridge = new THREE.Mesh(new THREE.BoxGeometry(TILE_SIZE, 1, TILE_SIZE*1.5), MATS.wood);
+                        bridge.position.set(x*TILE_SIZE, 0.5, y*TILE_SIZE + TILE_SIZE/2); scene.add(bridge);
+                    } 
+                    else createWall(x, y);
+                } else {
+                    const f = new THREE.Mesh(floorGeo, MATS.stone);
+                    f.position.set(x*TILE_SIZE, 0.1, y*TILE_SIZE); scene.add(f);
+                    if(x === cx+3 && y === cy+2) createTower(x, y, 2.0); 
+                }
+            }
+        }
+
+        // --- RENARDS (IA & COLLISION) ---
+        const foxes = [];
+        function createFoxMesh() {
+            const group = new THREE.Group();
+            const body = new THREE.Mesh(new THREE.BoxGeometry(4, 3, 6), MATS.fox); body.position.y = 3;
+            const head = new THREE.Mesh(new THREE.BoxGeometry(3, 3, 4), MATS.fox); head.position.set(0, 5, 4);
+            const tail = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.5, 5), MATS.fox); tail.position.set(0, 4, -4); tail.rotation.x = 0.5;
+            group.add(body); group.add(head); group.add(tail);
+            return group;
+        }
+
+        class FoxController {
+            constructor() {
+                this.mesh = createFoxMesh();
+                let sx, sy;
+                do {
+                    sx = Math.floor(Math.random() * MAP_SIZE);
+                    sy = Math.floor(Math.random() * MAP_SIZE);
+                } while(mapMatrix[sy][sx] !== T_GRASS);
+                this.mesh.position.set(sx * TILE_SIZE, 0, sy * TILE_SIZE);
+                scene.add(this.mesh);
+                this.target = null;
+                this.speed = 0.15;
+            }
+
+            update(playerPos) {
+                if(!this.target) {
+                    let tx, ty, attempts=0;
+                    do {
+                        tx = Math.floor(Math.random() * MAP_SIZE);
+                        ty = Math.floor(Math.random() * MAP_SIZE);
+                        attempts++;
+                    } while(attempts < 10 && (mapMatrix[ty][tx] === T_WATER || mapMatrix[ty][tx] === T_WALL));
+                    
+                    if(tx >= 0 && tx < MAP_SIZE && ty >= 0 && ty < MAP_SIZE) {
+                        this.target = new THREE.Vector3(tx * TILE_SIZE, 0, ty * TILE_SIZE);
+                        this.mesh.lookAt(this.target);
+                    }
+                }
+                
+                if(this.target) {
+                    if(this.mesh.position.distanceTo(this.target) < 0.5) this.target = null;
+                    else {
+                        // Check Mur
+                        const forward = new THREE.Vector3(0,0,1).applyQuaternion(this.mesh.quaternion);
+                        const nextPos = this.mesh.position.clone().add(forward.multiplyScalar(2));
+                        const gx = Math.round(nextPos.x / TILE_SIZE);
+                        const gz = Math.round(nextPos.z / TILE_SIZE);
+                        
+                        if(gx >= 0 && gx < MAP_SIZE && gz >= 0 && gz < MAP_SIZE) {
+                            if(mapMatrix[gz][gx] === T_WALL || mapMatrix[gz][gx] === T_WATER) {
+                                this.target = null; 
+                            } else {
+                                this.mesh.translateZ(this.speed);
+                                this.mesh.position.y = Math.abs(Math.sin(Date.now() * 0.01));
+                            }
+                        } else {
+                            this.target = null;
+                        }
+                    }
+                }
+
+                if(this.mesh.position.distanceTo(playerPos) < 5) {
+                    respawnPlayer();
+                }
+            }
+        }
+        foxes.push(new FoxController());
+        foxes.push(new FoxController());
+
+        // --- JOUEUR ---
+        const playerGroup = new THREE.Group();
+        playerGroup.position.set(spawnX * TILE_SIZE, 4, spawnY * TILE_SIZE);
+        scene.add(playerGroup);
+        playerGroup.add(camera);
+
+        const keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
+        window.addEventListener('keydown', (e) => { if(keys[e.code] !== undefined) keys[e.code] = true; });
+        window.addEventListener('keyup', (e) => { if(keys[e.code] !== undefined) keys[e.code] = false; });
+
+        function respawnPlayer() {
+            const overlay = document.getElementById('damage-overlay');
+            overlay.style.opacity = 0.8;
+            setTimeout(() => overlay.style.opacity = 0, 500);
+            playerGroup.position.set(spawnX * TILE_SIZE, 4, spawnY * TILE_SIZE);
+            playerGroup.rotation.y = 0;
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            foxes.forEach(fox => fox.update(playerGroup.position));
+
+            const rotSpeed = 0.04;
+            if(keys.ArrowLeft) playerGroup.rotation.y += rotSpeed;
+            if(keys.ArrowRight) playerGroup.rotation.y -= rotSpeed;
+
+            let speed = 0;
+            if(keys.ArrowUp) speed = -0.5;
+            if(keys.ArrowDown) speed = 0.5;
+
+            if(speed !== 0) {
+                const dx = Math.sin(playerGroup.rotation.y) * speed;
+                const dz = Math.cos(playerGroup.rotation.y) * speed;
+                const nx = playerGroup.position.x + dx;
+                const nz = playerGroup.position.z + dz;
+
+                const gx = Math.round(nx / TILE_SIZE);
+                const gz = Math.round(nz / TILE_SIZE);
+
+                if(gx >= 0 && gx < MAP_SIZE && gz >= 0 && gz < MAP_SIZE) {
+                    const tile = mapMatrix[gz][gx];
+                    let canMove = true;
+
+                    if(tile === T_WALL || tile === T_WATER) canMove = false;
+
+                    if(tile === T_TREE) {
+                        const treeCenterX = gx * TILE_SIZE;
+                        const treeCenterZ = gz * TILE_SIZE;
+                        const distToTree = Math.sqrt((nx - treeCenterX)**2 + (nz - treeCenterZ)**2);
+                        
+                        if(gameState.hasCut && distToTree < 4) {
+                            const objIndex = sceneObjects.findIndex(o => o.x === gx && o.z === gz && o.type === 'tree');
+                            if(objIndex !== -1) {
+                                scene.remove(sceneObjects[objIndex].mesh);
+                                sceneObjects.splice(objIndex, 1);
+                                mapMatrix[gz][gx] = T_GRASS;
+                            }
+                        } else if (distToTree < 3.5) { 
+                            canMove = false;
+                        }
+                    }
+
+                    if(canMove) {
+                        playerGroup.position.x = nx;
+                        playerGroup.position.z = nz;
+                    }
+                }
+            }
+
+            const pgx = Math.round(playerGroup.position.x / TILE_SIZE);
+            const pgz = Math.round(playerGroup.position.z / TILE_SIZE);
+            
+            for (let i = sceneObjects.length - 1; i >= 0; i--) {
+                const obj = sceneObjects[i];
+                if(obj.mesh.userData.anim) {
+                    // Animation lévitation SEULEMENT (plus de rotation Y)
+                    obj.mesh.position.y = 5 + Math.sin(Date.now() * 0.003);
+                }
+
+                if (obj.x === pgx && obj.z === pgz) {
+                    if (obj.type === 'key') {
+                        gameState.hasKey = true;
+                        document.getElementById('slot-key').classList.add('active');
+                        scene.remove(obj.mesh);
+                        sceneObjects.splice(i, 1);
+                        mapMatrix[pgz][pgx] = T_GRASS;
+                    }
+                    else if (obj.type === 'portal_hidden') {
+                        gameState.hasCut = true;
+                        document.getElementById('slot-cut').classList.add('active');
+                        scene.remove(obj.mesh);
+                        sceneObjects.splice(i, 1);
+                        mapMatrix[pgz][pgx] = T_GRASS;
+                        alert("Vous avez obtenu les CISEAUX MAGIQUES !");
+                    }
+                    else if (obj.type === 'portal_final') {
+                        if(gameState.hasKey) {
+                            alert("VICTOIRE ! Vous avez libéré le royaume.");
+                            location.reload();
+                        } else {
+                            playerGroup.position.z += 2;
+                            alert("Portail verrouillé ! Il faut la CLÉ.");
+                        }
+                    }
+                }
+            }
+
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+    </script>
+</body>
+</html>
