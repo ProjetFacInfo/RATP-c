@@ -1,0 +1,99 @@
+/* snake.css */
+
+/* --- ACTEURS (PINGOUIN & IGLOO) --- */
+#tux-penguin, #linux-igloo {
+    position: fixed;
+    z-index: 9990; /* Très haut pour être au dessus du site */
+    filter: drop-shadow(0 10px 10px rgba(0, 50, 100, 0.2));
+    transition: transform 0.1s linear;
+    pointer-events: none; /* Laisse passer les clics au travers si besoin */
+}
+#tux-penguin { width: 50px; height: auto; }
+#linux-igloo { bottom: 40px; right: 40px; width: 100px; height: auto; }
+
+/* --- INTERFACE DU JEU SNAKE --- */
+:root {
+    --neon-green: #0f0;
+    --neon-pink: #f0f;
+    --dark-bg: rgba(5, 5, 10, 0.98);
+}
+
+#snake-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100vh;
+    background: var(--dark-bg);
+    z-index: 9999; /* Au dessus de TOUT */
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+.crt-lines {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: linear-gradient(rgba(0, 0, 0, 0) 50%, rgba(0, 0, 0, 0.3) 50%);
+    background-size: 100% 3px;
+    pointer-events: none;
+    z-index: 10;
+    opacity: 0.6;
+}
+
+.game-container {
+    position: relative;
+    border: 3px solid var(--neon-green);
+    box-shadow: 0 0 20px var(--neon-green), inset 0 0 30px rgba(0, 255, 0, 0.3);
+    padding: 10px;
+    background: #000;
+    border-radius: 5px;
+    z-index: 20;
+}
+
+#snake-canvas {
+    background: radial-gradient(circle at center, #111 0%, #000 100%);
+    border: 1px solid #222;
+    display: block;
+}
+
+.neon-text {
+    color: var(--neon-green);
+    text-shadow: 0 0 15px var(--neon-green);
+    margin-bottom: 5px;
+    text-align: center;
+    font-size: 1.5em;
+    letter-spacing: 2px;
+}
+
+.sub-text {
+    color: #aaa;
+    font-size: 0.9em;
+    margin-bottom: 25px;
+    text-align: center;
+    text-transform: uppercase;
+}
+
+.ui-bar {
+    color: var(--neon-green);
+    margin-top: 10px;
+    display: flex;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.2em;
+}
+
+#close-btn {
+    position: absolute;
+    top: -20px; right: -20px;
+    background: var(--neon-pink);
+    border: 2px solid #fff;
+    color: white;
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-weight: bold;
+    box-shadow: 0 0 15px var(--neon-pink);
+    transition: transform 0.2s;
+    pointer-events: auto; /* Réactive les clics */
+}
+#close-btn:hover { transform: scale(1.1) rotate(90deg); }

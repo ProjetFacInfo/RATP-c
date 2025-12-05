@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SYSTEM HACK: SNAKE.EXE</title>
+    <link rel="stylesheet" href="snake.css">
+    <style>
+        /* On force l'affichage de l'overlay car c'est une page dédiée */
+        #snake-overlay { display: flex !important; }
+    </style>
+</head>
+<body>
+
+    <div id="snake-overlay">
+        <div class="crt-lines"></div>
+        <h2 class="neon-text">KERNEL ACCESS: GRANTED</h2>
+        <div class="sub-text">Android subsystem initialized.</div>
+        <div class="game-container">
+            <canvas id="snake-canvas" width="450" height="450"></canvas>
+            <div class="ui-bar">
+                <span>APPLE: <span id="snake-score">0</span></span>
+            </div>
+            <button id="close-btn">X</button>
+        </div>
+    </div>
+
+    <script src="snake.js"></script>
+
+    <script>
+        // Dès que la page est chargée, on lance le jeu
+        window.onload = function() {
+            // On appelle la fonction globale définie dans snake.js
+            if (typeof window.launchSnakeGame === 'function') {
+                window.launchSnakeGame();
+            }
+        };
+    </script>
+</body>
+</html>
