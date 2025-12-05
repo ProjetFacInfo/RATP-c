@@ -372,10 +372,52 @@ function updatePlayerUI() {
     document.getElementById('hp-text').innerText = player.hp + " / " + player.maxHp;
 }
 
+/* --- GESTION DE LA FIN DE PARTIE --- */
+
+function gameOver() {
+    gameState = 'GAMEOVER';
+    const overlay = document.getElementById('overlay-screen');
+    overlay.classList.remove('hidden');
+    
+    // Config Défaite
+    document.getElementById('end-title').innerText = "GAME OVER";
+    document.getElementById('end-title').style.color = "red";
+    document.getElementById('end-desc').innerText = "Le système propriétaire vous a écrasé.";
+    
+    // Boutons
+    document.getElementById('retry-btn').classList.remove('hidden');
+    document.getElementById('next-btn').classList.add('hidden');
+}
+
 function victory() {
     gameState = 'GAMEOVER';
-    document.getElementById('overlay-screen').classList.remove('hidden');
+    const overlay = document.getElementById('overlay-screen');
+    overlay.classList.remove('hidden');
+    
+    // Config Victoire
     document.getElementById('end-title').innerText = "LIBÉRATION !";
     document.getElementById('end-title').style.color = "#0f0";
-    document.getElementById('end-desc').innerText = "Goliath est maintenant Open Source.";
+    document.getElementById('end-title').style.textShadow = "0 0 20px #0f0";
+    document.getElementById('end-desc').innerText = "Goliath OS est maintenant Open Source.";
+    
+    // Boutons : On cache "Réessayer" et on montre "Suivant"
+    document.getElementById('retry-btn').classList.add('hidden');
+    document.getElementById('next-btn').classList.remove('hidden');
+    
+    // On peut aussi focus le bouton pour faciliter la navigation au clavier
+    document.getElementById('next-btn').focus();
 }
+
+document.getElementById('skip-btn').addEventListener('click', () => {
+    // 1. On tue le boss instantanément
+    boss.hp = 0;
+    
+    // 2. On met à jour la barre de vie visuellement (pour qu'elle tombe à 0)
+    updateBossUI();
+    
+    // 3. On déclenche la séquence de victoire immédiatement
+    victory();
+    
+    // 4. Petit message dans la boîte de dialogue pour le style
+    typeText("* HACK ACTIVÉ : GOLIATH SUPPRIMÉ.");
+});

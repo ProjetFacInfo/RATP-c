@@ -151,3 +151,58 @@ body {
 .hidden { display: none !important; }
 
 @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+/* Overlay fin */
+#overlay-screen {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.95);
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    z-index: 100;
+}
+#overlay-screen h1 { font-size: 60px; color: red; margin: 0; text-shadow: 0 0 10px red; }
+#overlay-screen p { font-size: 24px; color: #fff; margin-bottom: 30px; }
+
+/* Bouton Réessayer (Rouge/Blanc) */
+.retry-btn { 
+    padding: 15px 40px; font-size: 24px; cursor: pointer; 
+    font-family: 'VT323', monospace;
+    background: #000; color: #fff; border: 2px solid #fff;
+}
+.retry-btn:hover { background: #fff; color: #000; }
+
+/* NOUVEAU : Bouton Victoire (Vert) */
+.next-btn {
+    padding: 15px 40px; font-size: 24px; cursor: pointer;
+    font-family: 'VT323', monospace;
+    background: #000; color: #0f0; border: 2px solid #0f0;
+    box-shadow: 0 0 15px #0f0;
+    animation: pulseBtn 1s infinite alternate;
+}
+.next-btn:hover {
+    background: #0f0; color: #000;
+}
+
+@keyframes pulseBtn { from { transform: scale(1); } to { transform: scale(1.05); } }
+
+/* Style du bouton Skip */
+#skip-btn {
+    position: fixed; /* Fixe par rapport à l'écran */
+    top: 10px; 
+    left: 10px;
+    background: rgba(0, 0, 0, 0.5);
+    color: #555;
+    border: 1px solid #555;
+    font-family: 'VT323', monospace;
+    font-size: 20px;
+    cursor: pointer;
+    z-index: 2000; /* Au-dessus de tout (scanlines incluses) */
+    padding: 5px 10px;
+    transition: all 0.2s;
+}
+
+#skip-btn:hover {
+    color: #fff;
+    border-color: #fff;
+    background: #222;
+    box-shadow: 0 0 10px #fff;
+}
