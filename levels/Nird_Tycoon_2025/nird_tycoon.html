@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NIRD Tycoon 2025</title>
+    <link rel="stylesheet" href="nird_tycoon.css">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&family=Montserrat:wght@400;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div id="welcome-modal" class="modal">
+        <div class="modal-content">
+            <h1>🎓 LYCÉE TYCOON NIRD</h1>
+            <p>Votre lycée est étouffé par les coûts de "Goliath Corp".</p>
+            <p><strong>Votre mission :</strong> Cliquez pour refuser les licences, économisez du budget, et investissez dans le Libre pour atteindre 100% d'Indépendance !</p>
+            <button onclick="startGame()">COMMENCER LA TRANSITION</button>
+        </div>
+    </div>
+
+    <div class="game-wrapper">
+        
+        <aside class="panel left-panel">
+            <div class="header-logo">
+                <h2>BUREAU PROVISEUR</h2>
+            </div>
+            
+            <div class="clicker-area">
+                <button id="main-btn" class="big-button">
+                    <span class="icon">🚫</span>
+                    <span class="label">REFUSER UNE LICENCE</span>
+                    <span class="sub-label">+<span id="click-value">1</span>€ d'économies</span>
+                </button>
+            </div>
+
+            <div class="log-console">
+                <h3>📜 Journal Système</h3>
+                <ul id="game-log">
+                    <li>Bienvenue. Les PC rament...</li>
+                </ul>
+            </div>
+        </aside>
+
+        <main class="panel center-panel">
+            <div class="stats-bar">
+                <div class="stat">
+                    <span class="label">BUDGET (Économies)</span>
+                    <span class="value" id="budget-display">0 €</span>
+                </div>
+                <div class="stat">
+                    <span class="label">INDÉPENDANCE</span>
+                    <span class="value" id="independence-display">0 %</span>
+                </div>
+            </div>
+
+            <div id="school-visual" class="monitor-screen">
+    
+                <div id="layer-linux" class="wallpaper-layer">
+                    <div class="sun"></div>
+                    <div class="wind-turbine"></div>
+                    <div class="nird-logo">🐧</div>
+                </div>
+
+                <div id="layer-windows" class="wallpaper-layer">
+                    <div class="win-hill"></div> <div class="win-logo">❖</div>
+                    <div class="bsod-text">FATAL ERROR: SYSTEM OBSOLETE</div>
+                    </div>
+
+                <div class="status-overlay">
+                    <p id="status-text">ÉTAT : SYSTÈME PROPRIÉTAIRE</p>
+                </div>
+            </div>
+
+            <div class="passive-income">
+                <p>Économies par seconde : <span id="aps-display">0</span> €/s</p>
+            </div>
+        </main>
+
+        <aside class="panel right-panel">
+            <h2>🛠️ PÔLE TECHNIQUE</h2>
+            
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab('upgrades')">Améliorations</button>
+                <button class="tab-btn" onclick="switchTab('buildings')">Recrutement</button>
+            </div>
+
+            <div id="shop-container" class="shop-list">
+                </div>
+        </aside>
+
+    </div>
+
+    <div id="win-modal" class="modal hidden">
+        <div class="modal-content win-theme">
+            <h1>🏆 VILLAGE NUMÉRIQUE ÉTABLI !</h1>
+            <p>Bravo ! Votre établissement est autonome, écologique et libre.</p>
+            <p>Goliath Corp a perdu un client, mais l'éducation a gagné un avenir.</p>
+            <button onclick="location.reload()">REJOUER</button>
+        </div>
+    </div>
+
+    <script src="nird_tycoon.js"></script>
+</body>
+</html>

@@ -1,0 +1,235 @@
+:root {
+    --bg-dark: #1e1e2e;
+    --panel-bg: #2b2b3b;
+    --text-main: #cdd6f4;
+    --accent-red: #ff5555;   /* Couleur Big Tech */
+    --accent-green: #50fa7b; /* Couleur NIRD */
+    --accent-blue: #8be9fd;
+    --btn-shadow: 0 4px 0 #111;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: 'Fira Code', monospace; /* Police un peu "Tech" */
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* Layout Grid */
+.game-wrapper {
+    display: grid;
+    grid-template-columns: 25% 50% 25%;
+    height: 100%;
+}
+
+.panel {
+    padding: 20px;
+    border-right: 2px solid #444;
+    display: flex;
+    flex-direction: column;
+}
+
+.center-panel { border: none; background: #222; position: relative; }
+
+/* Styles Boutons & UI */
+.big-button {
+    width: 100%;
+    padding: 30px;
+    background: var(--accent-red);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800;
+    font-size: 1.2rem;
+    cursor: pointer;
+    box-shadow: var(--btn-shadow);
+    transition: all 0.1s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+.big-button:active { transform: translateY(4px); box-shadow: none; }
+
+.big-button.nird-mode {
+    background: var(--accent-green);
+    color: #222;
+}
+
+/* Log Console */
+.log-console {
+    margin-top: auto;
+    background: #111;
+    padding: 10px;
+    height: 200px;
+    overflow-y: auto;
+    border: 1px solid #444;
+    font-size: 0.8rem;
+    color: #aaa;
+}
+.log-console ul { list-style: none; padding: 0; }
+.log-console li { margin-bottom: 5px; border-bottom: 1px solid #222; padding-bottom: 2px; }
+
+/* Stats Bar */
+.stats-bar {
+    display: flex;
+    justify-content: space-around;
+    background: #111;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+.stat { text-align: center; }
+.stat .value { display: block; font-size: 1.5rem; font-weight: bold; color: var(--accent-blue); }
+
+/* VISUEL DU LYCÉE (Animation CSS pure) */
+.school-container {
+    flex: 1;
+    border-radius: 15px;
+    position: relative;
+    overflow: hidden;
+    transition: all 1s ease;
+    background: linear-gradient(to bottom, #555, #333); /* Ciel gris */
+}
+
+/* Thème 1 : Propriétaire (Moche) */
+.theme-proprietaire .waste-pile { display: block; position: absolute; bottom: 10px; right: 10px; font-size: 3rem; }
+.theme-proprietaire .building { 
+    width: 200px; height: 150px; background: #444; 
+    position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%);
+}
+
+/* Thème 2 : NIRD (Joli) */
+.theme-nird {
+    background: linear-gradient(to bottom, #87CEEB, #e0f7fa) !important; /* Ciel Bleu */
+}
+.theme-nird .building { background: #ffcc80; border: 4px solid #fff; } /* École rénovée */
+.theme-nird .waste-pile { display: none; } /* Plus de déchets */
+.theme-nird .tree-container::after {
+    content: "🌳 🌻 🌲";
+    font-size: 3rem;
+    position: absolute; bottom: 20px; right: 20px;
+}
+
+/* Boutique Items */
+.shop-item {
+    background: var(--panel-bg);
+    border: 1px solid #555;
+    padding: 10px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background 0.2s;
+    opacity: 0.7;
+}
+.shop-item.affordable { opacity: 1; border-color: var(--accent-green); }
+.shop-item:hover { background: #333; }
+.shop-item h4 { margin: 0; display: flex; justify-content: space-between; }
+.shop-item .cost { color: var(--accent-red); font-weight: bold; }
+.shop-item .desc { font-size: 0.8rem; color: #888; margin-top: 5px; }
+
+/* Modals */
+.modal {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.9);
+    display: flex; justify-content: center; align-items: center;
+    z-index: 100;
+}
+.modal-content {
+    background: #fff; color: #333; padding: 40px; text-align: center; border-radius: 10px; max-width: 500px;
+}
+.modal-content.win-theme { background: var(--accent-green); }
+.hidden { display: none; }
+
+/* --- LE MONITEUR / ÉCRAN --- */
+.monitor-screen {
+    flex: 1;
+    border-radius: 10px;
+    position: relative;
+    overflow: hidden;
+    border: 10px solid #333; /* Bordure écran */
+    background: #000;
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+}
+
+.wallpaper-layer {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    transition: opacity 0.5s;
+}
+
+/* --- THEME WINDOWS (Goliath) --- */
+#layer-windows {
+    background: linear-gradient(#2989d8 0%, #2989d8 50%, #fff 100%); /* Ciel bleu basique */
+    z-index: 10;
+    opacity: 1; /* Commence totalement opaque */
+}
+
+/* La colline verte style XP */
+.win-hill {
+    position: absolute;
+    bottom: 0; left: 0; width: 100%; height: 40%;
+    background: linear-gradient(160deg, #74d44c 0%, #469c26 100%);
+    border-top-left-radius: 100% 100px;
+    border-top-right-radius: 50% 50px;
+}
+
+.win-logo {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 100px;
+    color: rgba(255, 255, 255, 0.5);
+    opacity: 0.8;
+}
+
+.bsod-text {
+    display: none; /* Apparaît quand ça casse */
+    position: absolute; top: 10px; left: 10px;
+    color: white; font-family: monospace;
+    background: blue; padding: 5px;
+}
+
+/* Les Fissures (Cracks) */
+.crack {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.8);
+    pointer-events: none;
+    z-index: 20;
+}
+/* On simule des fissures avec des clip-paths ou des lignes simples */
+.crack-line {
+    width: 2px; height: 100px;
+    background: white;
+    box-shadow: 0 0 5px white;
+    transform-origin: center;
+}
+
+/* --- THEME LINUX (NIRD) --- */
+#layer-linux {
+    background: linear-gradient(to bottom, #4facfe 0%, #00f2fe 100%); /* Ciel cyan moderne */
+    z-index: 1; /* En dessous */
+}
+
+.sun {
+    position: absolute; top: 20px; right: 20px;
+    width: 60px; height: 60px;
+    background: #ffd700; border-radius: 50%;
+    box-shadow: 0 0 40px #ffd700;
+}
+
+.nird-logo {
+    position: absolute; bottom: 20px; right: 20px;
+    font-size: 80px;
+    animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
